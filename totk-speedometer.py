@@ -295,7 +295,7 @@ def export_video_with_overlay(video_path):
     orig_audioclip = orig_clip.audio
     clip = VideoFileClip(tmp_filename)
     clip_with_audio = clip.set_audio(orig_audioclip)
-    clip_with_audio.write_videofile(output_filename, audio_codec='aac')
+    clip_with_audio.write_videofile(output_filename, codec='libx264', audio_codec='aac')
     orig_clip.close()
     clip.close()
 
