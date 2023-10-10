@@ -14,11 +14,7 @@ from PyQt6.QtGui import QScreen
 from PyQt6.QtCore import QRunnable, QThreadPool
 
 from overlay import SpeedometerOverlay
-
-calc_every_x_frames = 10
-avg_every_x_meas = 2*30/calc_every_x_frames # 2 second average for 30 fps video
-
-output_directory = 'totk-speedometer-videos'
+import settings
 
 # Lists to keep historical values
 speed_list = []
@@ -116,7 +112,7 @@ def process_coordinates(coord, last_coord, time_delta):
             speed = float('nan')
         else:
             speed_list.append(speed)
-            if len(speed_list) > avg_every_x_meas:
+            if len(speed_list) > settings.avg_every_x_meas:
                 speed_list.pop(0)
 
         speed_h = distance_h/time_delta
@@ -124,7 +120,7 @@ def process_coordinates(coord, last_coord, time_delta):
             speed_h = float('nan')
         else:
             speed_h_list.append(speed_h)
-            if len(speed_h_list) > avg_every_x_meas:
+            if len(speed_h_list) > settings.avg_every_x_meas:
                 speed_h_list.pop(0)
 
         speed_v = distance_v/time_delta
@@ -132,7 +128,7 @@ def process_coordinates(coord, last_coord, time_delta):
             speed_v = float('nan')
         else:
             speed_v_list.append(speed_v)
-            if len(speed_v_list) > avg_every_x_meas:
+            if len(speed_v_list) > settings.avg_every_x_meas:
                 speed_v_list.pop(0)
 
         if len(speed_list) > 0:
@@ -199,9 +195,9 @@ def export_video_with_overlay(video_path):
     filename = os.path.basename(video_path)
     name = os.path.splitext(filename)[0]
     ext = os.path.splitext(filename)[1]
-    os.makedirs(os.path.join(path, output_directory), exist_ok=True)
-    tmp_filename = os.path.join(path, output_directory, name+'_speedometer_tmp'+ext)
-    output_filename = os.path.join(path, output_directory, name+'_speedometer'+ext)
+    os.makedirs(os.path.join(path, settings.output_directory), exist_ok=True)
+    tmp_filename = os.path.join(path, settings.output_directory, name+'_speedometer_tmp'+ext)
+    output_filename = os.path.join(path, settings.output_directory, name+'_speedometer'+ext)
     video_output = cv2.VideoWriter(tmp_filename, cv2.VideoWriter_fourcc(*'avc1'), fps, (width, height))
 
     count = 0
@@ -216,7 +212,7 @@ def export_video_with_overlay(video_path):
 
             map_circle = [int(width*0.06875), int(height*0.1223), int(width*0.0641)]
 
-            if count > calc_every_x_frames:
+            if count > settings.calc_every_x_frames:
                 coord = extract_coordinates(map_image, map_circle)
                 if coord is not None:
                     if last_coord is None:
@@ -454,7 +450,7 @@ def main():
         mainwindow = SpeedometerOverlay()
         monitors = QScreen.virtualSiblings(mainwindow.screen())
         monitor = monitors[args.monitor-1].availableGeometry()
-        mainwindow.move(monitor.right() - 400, monitor.bottom() - 800)
+        mainwindow.move(monitor.left() + settings.overlay_horizontal_pos, monitor.top() + settings.overlay_vertical_pos)
         mainwindow.show()
         runnable = SpeedometerRunnable(mainwindow, args.monitor)
         QThreadPool.globalInstance().start(runnable)

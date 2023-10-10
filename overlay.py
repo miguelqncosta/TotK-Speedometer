@@ -6,6 +6,7 @@ from PyQt6 import QtCore, QtWidgets
 from PyQt6.QtGui import QPainter, QPen, QColor
 from PyQt6.QtWidgets import QMainWindow
 
+import settings
 
 class SpeedometerOverlay(QMainWindow):
     def __init__(self):
@@ -18,7 +19,7 @@ class SpeedometerOverlay(QMainWindow):
         self.setAttribute(
             QtCore.Qt.WidgetAttribute.WA_TranslucentBackground
         )
-        self.setGeometry(QtCore.QRect(0, 0, 300, 400))
+        self.setGeometry(QtCore.QRect(0, 0, settings.overlay_width, settings.overlay_height))
         self.widget = QtWidgets.QWidget()
         self.widget.setStyleSheet('color: white;')
         self.layout = QtWidgets.QVBoxLayout()
