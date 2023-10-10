@@ -12,62 +12,106 @@ Provides independent stats for horizontal, vertical and total (3D) speed:
 
 ![Alt text](images/demo.png "Demo Image")
 
-Tested only on macOS 13.5 but should work on every platform.
+
+
+## Requirements
+- python 3.9
+- tesseract 5.3.2
+- ffmpeg 6.0
+
+Tested on macOS 13.5 with python 3.9
+
+Works on every platform (macOS, Linux and Windows) as long as the dependencies are properlly installed.
 
 ## Installation
 
-Clone or download a zip of this repository.
+### Install Dependencies
 
-### Virtual Environment (optional)
+#### Install Tesseract and FFmpeg using Homebrew (RECOMMENDED)
+
+If you don't have Homebrew you can follow the instructions on [brew.sh](https://brew.sh) to install it.
+
+To use Homebrew on Windows you can use the [Windows Subsystem for Linux](https://learn.microsoft.com/en-us/windows/wsl/about)
+
+
+
+```
+brew install tesseract
+```
+```
+brew install ffmpeg
+```
+
+#### Install Tesseract and FFmpeg from the official sites (HARDER)
+If you preffer not to use Homebrew you can install Tesseract and FFmpeg from the official sites.
+##### Install Tesseract
+Follow the Installation instructions on the [official documentation](https://tesseract-ocr.github.io/tessdoc/Installation.html).
+
+##### Install FFmpeg
+Download FFmpeg from [ffmpeg.org](https://ffmpeg.org/download.html)
+
+You can follow this guide to [install FFmpeg on Linux, macOS, and Windows](https://www.hostinger.com/tutorials/how-to-install-ffmpeg) to complete the install process.
+
+There is also [this guide for Windows](https://phoenixnap.com/kb/ffmpeg-windows).
+
+I used Homebrew because it is much simpler to install and I have not tested these guides. They are here for reference and to help anyone who is interested in using the totk-speedometer but doesn't know how to install the dependencies. These guides should work but it might depend on your specific environment.
+
+
+## TotK Speedometer
+Download the zip of the latest [release](https://github.com/miguelqncosta/TotK-Speedometer/releases) and unzip it.
+
+Open a terminal window and navigate into the TotK Speedometer directory.
+```
+cd location-of-the-speedometer-folder/TotK-Speedometer-X.X.X
+```
+
+Where `X.X.X` is the downloaded version number.
+
+#### Virtual Environment (optional)
 ```
 python3 -m venv venv-totk-speedometer
 source venv-totk-speedometer/bin/activate
 ```
 
-### Dependencies
-
-#### Install Tesseract
-Follow the Installation instructions on the [official documentation](https://tesseract-ocr.github.io/tessdoc/Installation.html).
-
-```
-brew install tesseract
-```
-
-#### Install FFmpeg
-```
-brew install ffmpeg
-```
-
-Or download and install from [ffmpeg.org](https://ffmpeg.org/download.html)
-
 #### Install python dependencies
 ```
-pip install --upgrade pip
-pip install -r requirements.txt
+python3 -m pip install --upgrade pip
+python3 -m pip install -r requirements.txt
 ```
+
 
 ## Usage
 
-### Add TotK speedometer overlay to video file
+Navigate into the TotK Speedometer directory.
 ```
-python totk-speedometer.py -f <path-to-totk-video>
+cd location-of-the-speedometer-folder/TotK-Speedometer-X.X.X
 ```
+
+### Add TotK speedometer overlay to a video file
+```
+python3 totk-speedometer.py -f <path-to-totk-video>
+```
+
+Example:
+```
+python3 totk-speedometer.py -f '/Users/miguelcosta/Downloads/totk-videos/2023100123530500-CC47F0DEC75C1FD3B1F95FA9F9D57667.mp4'
+``````
 
 Output files are saved to `<path-to-totk-video>/totk-speedometer-videos/`
 
 #### Accepts multiple video files as input:
 ```
-python totk-speedometer.py -f <path-to-totk-video-1>  <path-to-totk-video-2> ...
+python3 totk-speedometer.py -f <path-to-totk-video-1>  <path-to-totk-video-2> ...
 ```
 
 ### Running from screen capture
 ```
-python totk-speedometer.py -s
+python3 totk-speedometer.py -s
 ```
 
 Select a difference monitor to capture (1, 2, 3, etc. Default is 1):
 ```
-python totk-speedometer.py -s -m <monitor-number>
+python3 totk-speedometer.py -s -m <monitor-number>
 ```
 
 ##### Running from screen capture is still on a initial state and may not work properly.
@@ -76,7 +120,7 @@ python totk-speedometer.py -s -m <monitor-number>
 - The map underneed the coordinates can obfuscate them and make it very hard to read. This sometimes results in wrong coordinates or not being able to read the coordinates at all.
 - Running from screen capture can have a hard time detecting the map position. If it doens't work you can use the `images/detected-circles.png` and `images/detected-map-circles.png` to try to understand whats happening. Using a maximized window or a solid color background usually helps.
 - Running from screen capture will be more imprecise since it uses real time to calculate speed instead of the video FPS as a time base.
-- The overlay of the screen capture mode still has hardcoded size and position.
+- The overlay of the screen capture mode still has hardcoded size and position but it can be configured in the [settings.py](settings.py) file.
 
 ## Roadmap
 - [ ] Improve the image pre-processing for better coordinate readings.
@@ -87,7 +131,7 @@ python totk-speedometer.py -s -m <monitor-number>
 Distributed under the MIT License. See `LICENSE.txt` for more information.
 
 ## Support
-If you find any issues with it please report them in the issue tracker.
+If you find any issues with it please report them in the [issue tracker](https://github.com/miguelqncosta/TotK-Speedometer/issues).
 
 Keep in mind that this is a hobby project for a game, so keep a light mood and lets improve the TotK Speedometer for everyone!
 
@@ -110,7 +154,7 @@ Every donation is greatly appreciated!
 
 <div align="center">
   <a href="https://www.paypal.com/donate/?hosted_button_id=EEMCHRRXCQZCY">
-    <img src="images/paypal-donate-blue-button.png" alt="Donate with PayPal" style="width:30%"/>
+    <img src="images/paypal-donate-blue-button.png" alt="Donate with PayPal" style="width: 300px"/>
   </a>
   <h2>Thank you for your support!</h2>
 </div>
