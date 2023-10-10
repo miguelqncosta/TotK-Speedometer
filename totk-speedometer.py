@@ -303,103 +303,103 @@ def export_video_with_overlay(video_path):
     os.remove(tmp_filename)
 
 
+def detect_map(monitor_number):
+    with mss.mss() as sct:
+        mon = sct.monitors[monitor_number]
+
+        monitor = {
+                'top': mon['top'],
+                'left': mon['left'],
+                'width': mon['width'],
+                'height': mon['height'],
+                'mon': monitor_number,
+            }
+
+        print('Trying to detect map position...')
+
+        while True:
+            sct_img = sct.grab(monitor)
+            img = np.array(sct_img)
+            # cv2.imwrite('images/screenshot.png', img)
+
+            h, w, c = img.shape
+            if mon['width']*2 == w:
+                scaling = 2
+            else:
+                scaling = 1
+
+            circles, circles_img = detect_circle(img, w, h)
+            if circles_img is not None:
+                cv2.imwrite('images/detected-circles.png', circles_img)
+
+            if circles is not None:
+                if len(circles[0])==1:
+                    map_circle = circles[0][0]
+
+                    # Capture only the screen part the map occupies
+                    monitor_region = {
+                        'top': mon['top']+(map_circle[1]-map_circle[2])/scaling - 20,
+                        'left': mon['left']+(map_circle[0]-map_circle[2])/scaling - 20,
+                        'width': ((map_circle[2]*2)/scaling) + 40,
+                        'height': ((map_circle[2]*2)/scaling) + 40,
+                        'mon': monitor_number,
+                    }
+
+                    sct_img = sct.grab(monitor_region)
+                    img = np.array(sct_img)
+                    cv2.imwrite('images/map.png', img)
+
+                    circles, circles_img = detect_circle(img, w, h)
+                    if circles_img is not None:
+                        cv2.imwrite('images/detected-map-circles.png', circles_img)
+
+                    if circles is not None:
+                        if len(circles[0])==1:
+                            map_circle = circles[0][0]
+                            coord = extract_coordinates(img, map_circle)
+                            if coord is not None:
+                                tmp_results = process_coordinates(coord, coord, 1)
+                                if tmp_results is not None:
+                                    print('\rMap position detected.                                         ')
+                                    return map_circle, monitor_region
+                        else:
+                            print('\rCould not detect map circle. Too many circles were found.      ', end='')
+                    else:
+                        print('\rMap circle could not be found.                                 ', end='')
+                else:
+                    print('\rCould not detect map position. Too many positions were found.  ', end='')
+            else:
+                print('\rMap position could not be detected.                            ', end='')
+
+
 
 class SpeedometerRunnable(QRunnable):
-    def __init__(self, mainwindow, monitor_number):
+    def __init__(self, mainwindow, monitor_sct, map_circle):
         super().__init__()
         self.mainwindow = mainwindow
-        self.monitor_number = monitor_number
+        self.monitor_sct = monitor_sct
+        self.map_circle = map_circle
         self.running = True
 
     def stop(self):
         self.running = False
 
     def run(self):
+        last_coord = None
+        last_coord_time = None
+
         with mss.mss() as sct:
-            mon = sct.monitors[self.monitor_number]
-
-            print('Trying to detect map position...')
-
             while self.running:
-                time.sleep(0.1)
+                # Grab the map screenshot
+                sct_img = sct.grab(self.monitor_sct)
 
-                monitor = {
-                    'top': mon['top'],
-                    'left': mon['left'],
-                    'width': mon['width'],
-                    'height': mon['height'],
-                    'mon': self.monitor_number,
-                }
-
-                sct_img = sct.grab(monitor)
-                img = np.array(sct_img)
-                # cv2.imwrite('images/screenshot.png', img)
-
-                h, w, c = img.shape
-                if mon['width']*2 == w:
-                    scaling = 2
-                else:
-                    scaling = 1
-
-                circles, circles_img = detect_circle(img, w, h)
-                if circles_img is not None:
-                    cv2.imwrite('images/detected-circles.png', circles_img)
-
-                if circles is not None:
-                    if len(circles[0])==1:
-                        map_circle = circles[0][0]
-
-                        # Capture only the screen part the map occupies
-                        monitor = {
-                            'top': mon['top']+(map_circle[1]-map_circle[2])/scaling - 20,
-                            'left': mon['left']+(map_circle[0]-map_circle[2])/scaling - 20,
-                            'width': ((map_circle[2]*2)/scaling) + 40,
-                            'height': ((map_circle[2]*2)/scaling) + 40,
-                            'mon': self.monitor_number,
-                        }
-
-                        sct_img = sct.grab(monitor)
-                        img = np.array(sct_img)
-                        cv2.imwrite('images/map.png', img)
-
-                        circles, circles_img = detect_circle(img, w, h)
-                        if circles_img is not None:
-                            cv2.imwrite('images/detected-map-circles.png', circles_img)
-
-                        if circles is not None:
-                            if len(circles[0])==1:
-                                map_circle = circles[0][0]
-                                coord = extract_coordinates(img, map_circle)
-                                if coord is not None:
-                                    tmp_results = process_coordinates(coord, coord, 1)
-                                    if tmp_results is not None:
-                                        print('Map position detected.                                         ')
-                                        break
-                            else:
-                                print('Could not detect map circle. Too many circles were found.      ', end='\r')
-                        else:
-                            print('Map circle could not be found.                                 ', end='\r')
-                    else:
-                        print('Could not detect map position. Too many positions were found.  ', end='\r')
-                else:
-                    print('Map position could not be detected.                            ', end='\r')
-
-            last_coord = None
-            last_coord_time = None
-
-            while self.running:
-                last_time = time.time()
-
-                # Grab the data
-                sct_img = sct.grab(monitor)
-
-                # Save to the picture file
+                # Save the map screenshot
                 mss.tools.to_png(sct_img.rgb, sct_img.size, output='images/map.png')
 
                 # Get raw pixels from the screen, save it to a Numpy array
                 img = np.array(sct_img)
 
-                coord = extract_coordinates(img, map_circle)
+                coord = extract_coordinates(img, self.map_circle)
                 if coord is not None:
                     if last_coord is None:
                         last_coord = coord
@@ -446,13 +446,14 @@ def main():
         for f in args.files:
             export_video_with_overlay(f)
     elif args.screen is not None:
+        map_circle, monitor_sct = detect_map(args.monitor)
         app = QtWidgets.QApplication(sys.argv)
         mainwindow = SpeedometerOverlay()
         monitors = QScreen.virtualSiblings(mainwindow.screen())
         monitor = monitors[args.monitor-1].availableGeometry()
         mainwindow.move(monitor.left() + settings.overlay_horizontal_pos, monitor.top() + settings.overlay_vertical_pos)
         mainwindow.show()
-        runnable = SpeedometerRunnable(mainwindow, args.monitor)
+        runnable = SpeedometerRunnable(mainwindow, monitor_sct, map_circle)
         QThreadPool.globalInstance().start(runnable)
         sys.exit(app.exec())
 

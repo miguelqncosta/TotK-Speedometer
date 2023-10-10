@@ -25,20 +25,25 @@ class SpeedometerOverlay(QMainWindow):
         self.layout = QtWidgets.QVBoxLayout()
         self.layout.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
 
+        self.setStyleSheet("QLabel{font-size: 16pt;}")
+
         current_time = str(datetime.datetime.now().strftime("%H:%M:%S"))
         self.l_time = QtWidgets.QLabel('Time: '+current_time)
 
         self.l_total = QtWidgets.QLabel('Total')
+        self.l_total.setStyleSheet("QLabel{font-size: 20pt; padding-top: 1em}")
         self.l_speed = QtWidgets.QLabel('Speed: 0.00 m/s')
         self.l_avg_speed = QtWidgets.QLabel('Avg: 0.00 m/s')
         self.l_max_speed = QtWidgets.QLabel('Max: 0.00 m/s')
 
         self.l_horizontal = QtWidgets.QLabel('Horizontal')
+        self.l_horizontal.setStyleSheet("QLabel{font-size: 20pt; padding-top: 1em}")
         self.l_speed_h = QtWidgets.QLabel('Speed: 0.00 m/s')
         self.l_avg_speed_h = QtWidgets.QLabel('Avg: 0.00 m/s')
         self.l_max_speed_h = QtWidgets.QLabel('Max: 0.00 m/s')
 
         self.l_vertical = QtWidgets.QLabel('Vertical')
+        self.l_vertical.setStyleSheet("QLabel{font-size: 20pt; padding-top: 1em}")
         self.l_speed_v = QtWidgets.QLabel('Speed: 0.00 m/s')
         self.l_avg_speed_v = QtWidgets.QLabel('Avg: 0.00 m/s')
         self.l_max_speed_v = QtWidgets.QLabel('Max: 0.00 m/s')
