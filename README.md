@@ -10,8 +10,11 @@ Provides independent stats for horizontal, vertical and total (3D) speed:
   - Average speed of the last 10 speed values
   - Maximum speed of the last 10 speed values
 
-![Alt text](images/readme/demo.png "Demo Image")
 
+[Watch the video demo on Youtube](https://youtu.be/f210KAuhMGI)
+
+
+![Alt text](images/readme/demo.png "Demo Image")
 
 
 ## Requirements
