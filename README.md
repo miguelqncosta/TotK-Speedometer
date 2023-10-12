@@ -5,12 +5,12 @@ A speedometer for `Zelda - Tears of the Kingdom` that overlays speed information
 
 Provides independent stats for horizontal, vertical and total (3D) speed:
   - Current speed
-    - Calculated every 10 frames for video
-    - As fast as it can for real-time screen capture (about 5 FPS)
-  - Average speed based on a two second moving average.
-  - Maximum speed over the last two seconds.
+    - Calculated every 10 frames for video (configurable in [settings.py](settings.py))
+    - Or as fast as it can for real-time screen capture
+  - Average speed of the last 10 speed values
+  - Maximum speed of the last 10 speed values
 
-![Alt text](images/demo.png "Demo Image")
+![Alt text](images/readme/demo.png "Demo Image")
 
 
 
@@ -57,7 +57,7 @@ There is also [this guide for Windows](https://phoenixnap.com/kb/ffmpeg-windows)
 I used Homebrew because it is much simpler to install and I have not tested these guides. They are here for reference and to help anyone who is interested in using the totk-speedometer but doesn't know how to install the dependencies. These guides should work but it might depend on your specific environment.
 
 
-## TotK Speedometer
+### Install TotK Speedometer
 Download the zip of the latest [release](https://github.com/miguelqncosta/TotK-Speedometer/releases) and unzip it.
 
 Open a terminal window and navigate into the TotK Speedometer directory.
@@ -67,18 +67,14 @@ cd location-of-the-speedometer-folder/TotK-Speedometer-X.X.X
 
 Where `X.X.X` is the downloaded version number.
 
-#### Virtual Environment (optional)
-```
-python3 -m venv venv-totk-speedometer
-source venv-totk-speedometer/bin/activate
-```
-
 #### Install python dependencies
 ```
 python3 -m pip install --upgrade pip
 python3 -m pip install -r requirements.txt
 ```
 
+## Configure
+See the file [settings.py](settings.py) to configure the TotK Speedometer.
 
 ## Usage
 
@@ -114,11 +110,10 @@ Select a difference monitor to capture (1, 2, 3, etc. Default is 1):
 python3 totk-speedometer.py -s -m <monitor-number>
 ```
 
-##### Running from screen capture is still on a initial state and may not work properly.
 
 ## Known issues:
 - The map underneed the coordinates can obfuscate them and make it very hard to read. This sometimes results in wrong coordinates or not being able to read the coordinates at all.
-- Running from screen capture can have a hard time detecting the map position. If it doens't work you can use the `images/detected-circles.png` and `images/detected-map-circles.png` to try to understand whats happening. Using a maximized window or a solid color background usually helps.
+- Running from screen capture can have a hard time detecting the map position. If it doens't work you can use the `images/detected_circles.png` and `images/detected_map_circles.png` to try to understand whats happening. Using a maximized window or a solid color background usually helps.
 - Running from screen capture will be more imprecise since it uses real time to calculate speed instead of the video FPS as a time base.
 - The overlay of the screen capture mode still has hardcoded size and position but it can be configured in the [settings.py](settings.py) file.
 
@@ -154,7 +149,7 @@ Every donation is greatly appreciated!
 
 <div align="center">
   <a href="https://www.paypal.com/donate/?hosted_button_id=EEMCHRRXCQZCY">
-    <img src="images/paypal-donate-blue-button.png" alt="Donate with PayPal" style="width: 300px"/>
+    <img src="images/readme/paypal-donate-blue-button.png" alt="Donate with PayPal" style="width: 300px"/>
   </a>
   <h2>Thank you for your support!</h2>
 </div>

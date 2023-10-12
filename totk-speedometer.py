@@ -4,17 +4,16 @@ import sys
 import time
 
 import cv2
+import mss.tools
 import numpy as np
 import pytesseract
 from moviepy.editor import *
-from mss import mss
-import mss.tools
 from PyQt6 import QtWidgets
-from PyQt6.QtGui import QScreen
 from PyQt6.QtCore import QRunnable, QThreadPool
+from PyQt6.QtGui import QScreen
 
-from overlay import SpeedometerOverlay
 import settings
+from overlay import SpeedometerOverlay
 
 # Lists to keep historical values
 speed_list = []
@@ -22,8 +21,8 @@ speed_h_list = []
 speed_v_list = []
 
 
-def detect_circle(map_image, width, height):
-    img = cv2.cvtColor(map_image,cv2.COLOR_BGR2GRAY)
+def detect_circle(map_img, width, height):
+    img = cv2.cvtColor(map_img,cv2.COLOR_BGR2GRAY)
 
     circles = cv2.HoughCircles(img, cv2.HOUGH_GRADIENT, 1, (height*0.2),
                             param1=80,
@@ -48,56 +47,68 @@ def detect_circle(map_image, width, height):
         return None, None
 
 
-
-def extract_coordinates(map_img, map_circle):
-    map_img = cv2.cvtColor(map_img,cv2.COLOR_BGR2GRAY)
-
+def get_coord_img(map_img, map_circle):
     scaling = 16
 
-    polar_image = cv2.warpPolar(map_img, dsize=(
+    polar_img = cv2.warpPolar(map_img, dsize=(
                                         map_img.shape[1]*scaling,
                                         map_img.shape[0]*scaling),
                                         center=(map_circle[0],map_circle[1]
                                     ),
                                     maxRadius=map_circle[2],
-                                    flags=cv2.WARP_POLAR_LOG | cv2.INTER_LANCZOS4 )
+                                    flags=cv2.WARP_POLAR_LOG | cv2.INTER_CUBIC )
 
-    polar_image = cv2.rotate(polar_image, cv2.ROTATE_90_CLOCKWISE)
-    # cv2.imwrite('images/polar_map.png', polar_image)
+    polar_img = cv2.rotate(polar_img, cv2.ROTATE_90_CLOCKWISE)
+    cropped_img = polar_img[int(polar_img.shape[0]*0.95):, int(polar_img.shape[1]*0.58):int(polar_img.shape[1]*0.92)]
 
-    # Cropping an image
-    cropped_img = polar_image[int(polar_image.shape[0]*0.95):, int(polar_image.shape[1]*0.58):int(polar_image.shape[1]*0.92)]
-    # cv2.imwrite('images/cropped_img.png', cropped_img)
+    if settings.save_preprocessing_images: 
+        cv2.imwrite('images/map_polar.png', polar_img)
+        cv2.imwrite('images/map_cropped.png', cropped_img)
 
-    blur_img = cv2.GaussianBlur(cropped_img,(5,5),0)
-    # cv2.imwrite('images/blur_img.png', blur_img)
+    return cropped_img
 
-    contrast_img = cv2.convertScaleAbs(blur_img, alpha=3, beta=-250)
-    # cv2.imwrite('images/contrast_img.png', contrast_img)
 
-    ret3,threshold_img = cv2.threshold(blur_img, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
-    # cv2.imwrite('images/threshold_img.png', threshold_img)
+def preprocess_coord_img(coord_img):
+    coord_img = cv2.cvtColor(coord_img,cv2.COLOR_BGR2GRAY)
+    blur_img = cv2.GaussianBlur(coord_img,(5,5),0)
+    avg_brightness = cv2.mean(blur_img)[0]
+    beta = -2*avg_brightness-50
+    contrast_img = cv2.convertScaleAbs(blur_img, alpha=3.5, beta=beta)
+    ret, threshold_img = cv2.threshold(contrast_img, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+    erode_img = cv2.erode(threshold_img, np.ones((3,3)), iterations=1)
+    dilate_img = cv2.dilate(erode_img, np.ones((3,3)), iterations=2)
+    processed_img = cv2.erode(dilate_img, np.ones((3,3)), iterations=2)
+    
+    if settings.save_preprocessing_images:
+        os.makedirs(os.path.join('images', 'preprocessing'), exist_ok=True)
+        cv2.imwrite('images/preprocessing/1_blur_img.png', blur_img)
+        cv2.imwrite('images/preprocessing/2_contrast_img.png', contrast_img)
+        cv2.imwrite('images/preprocessing/3_threshold_img.png', threshold_img)
+        cv2.imwrite('images/preprocessing/4_erode_img.png', erode_img)
+        cv2.imwrite('images/preprocessing/5_dilate_img.png', dilate_img)
+        cv2.imwrite('images/preprocessing/6_processed_img.png', processed_img)
 
-    kernel = np.ones((3,3), np.uint8)
-    erode_img = cv2.erode(threshold_img, kernel, iterations=1)
-    # cv2.imwrite('images/erode_img.png', erode_img)
-    dilate_img = cv2.dilate(erode_img, kernel, iterations=2)
-    # cv2.imwrite('images/dilate_img.png', dilate_img)
-    processed_img = cv2.erode(dilate_img, kernel, iterations=1)
-    # cv2.imwrite('images/processed_img.png', processed_img)
+    return processed_img
 
-    text = pytesseract.image_to_string(processed_img, config='--psm 7 -c tessedit_char_whitelist=" -0123456789"')
+
+def extract_coordinates(coord_img):
+    text = pytesseract.image_to_string(coord_img, config='--psm 7 --oem 3 -c tessedit_char_whitelist=" -0123456789"')
+    coord_list = text.strip().replace('--', '-').split(' ')
+
+    if '-' in coord_list:
+        coord_list.remove('-')
+
     try:
         if isinstance(text, str) and text != '':
-            coord = [int(c) for c in text.strip().split(' ')]
-            if not (4000 > coord[0] > -4000 and 5000 > coord[1] > -4000 and 3400 > coord[2] > -3000):
-                coord = None
-        else:
-            coord = None
-    except:
-        coord = None
+            coord = [int(c) for c in coord_list]
 
-    return coord
+            if len(coord) == 3:
+                if (5000 > coord[0] > -5000 and 4000 > coord[1] > -4000 and 3500 > coord[2] > -3000):
+                    return coord
+    except ValueError:
+        return None
+
+    return None
 
 
 
@@ -112,7 +123,7 @@ def process_coordinates(coord, last_coord, time_delta):
             speed = float('nan')
         else:
             speed_list.append(speed)
-            if len(speed_list) > settings.avg_every_x_meas:
+            if len(speed_list) > settings.avg_length:
                 speed_list.pop(0)
 
         speed_h = distance_h/time_delta
@@ -120,7 +131,7 @@ def process_coordinates(coord, last_coord, time_delta):
             speed_h = float('nan')
         else:
             speed_h_list.append(speed_h)
-            if len(speed_h_list) > settings.avg_every_x_meas:
+            if len(speed_h_list) > settings.avg_length:
                 speed_h_list.pop(0)
 
         speed_v = distance_v/time_delta
@@ -128,7 +139,7 @@ def process_coordinates(coord, last_coord, time_delta):
             speed_v = float('nan')
         else:
             speed_v_list.append(speed_v)
-            if len(speed_v_list) > settings.avg_every_x_meas:
+            if len(speed_v_list) > settings.avg_length:
                 speed_v_list.pop(0)
 
         if len(speed_list) > 0:
@@ -206,85 +217,88 @@ def export_video_with_overlay(video_path):
 
     while video.isOpened():
         ret,frame = video.read()
-        if ret:
-            map_image = frame[int(height*0.71):int(height*0.96), int(width*0.829):int(width*0.97)]
-            # cv2.imwrite('images/map.png', map_image)
+        if not ret:
+            break
 
-            map_circle = [int(width*0.06875), int(height*0.1223), int(width*0.0641)]
+        map_img = frame[int(height*0.71):int(height*0.96), int(width*0.829):int(width*0.97)]
+        map_circle = [int(width*0.06875), int(height*0.1223), int(width*0.0641)]
 
-            if count > settings.calc_every_x_frames:
-                coord = extract_coordinates(map_image, map_circle)
-                if coord is not None:
-                    if last_coord is None:
+        if settings.save_preprocessing_images:
+            cv2.imwrite('images/map.png', map_img)
+
+        if count > settings.calc_every_x_frames:
+            coord_img = get_coord_img(map_img, map_circle)
+            processed_img = preprocess_coord_img(coord_img)
+            coord = extract_coordinates(processed_img)
+            text_color = settings.text_color_fail # Set text color to gray when the coordinates are not valid
+
+            if coord is not None:
+                if last_coord is None:
+                    last_coord = coord
+                    count = 0
+                else:
+                    tmp_results = process_coordinates(coord, last_coord, (1/fps)*count)
+                    if tmp_results is not None:
+                        print(f'Coord: {[f"{c:5}" for c in coord]}'
+                        f' - Last Coord {[f"{c:5}" for c in last_coord]}'
+                        f' - Distance: {tmp_results["distance"]["Distance"]:6.2f} m'
+                        f' - Speed: {tmp_results["total"]["Speed"]:5.2f} m/s'
+                        f' - AvgSpeed: {tmp_results["total"]["Avg"]:5.2f} m/s'
+                        f' - Speed H: {tmp_results["horizontal"]["Speed"]:5.2f} m/s'
+                        f' - Speed V: {tmp_results["vertical"]["Speed"]:5.2f} m/s')
+
                         last_coord = coord
                         count = 0
-                    else:
-                        tmp_results = process_coordinates(coord, last_coord, (1/fps)*count)
-                        if tmp_results is not None:
-                            print(f'Coord: {[f"{c:5}" for c in coord]}'
-                            f' - Last Coord {[f"{c:5}" for c in last_coord]}'
-                            f' - Distance: {tmp_results["distance"]["Distance"]:6.2f} m'
-                            f' - Speed: {tmp_results["total"]["Speed"]:5.2f} m/s'
-                            f' - AvgSpeed: {tmp_results["total"]["Avg"]:5.2f} m/s'
-                            f' - Speed H: {tmp_results["horizontal"]["Speed"]:5.2f} m/s'
-                            f' - Speed V: {tmp_results["vertical"]["Speed"]:5.2f} m/s')
 
-                            last_coord = coord
-                            count = 0
+                        if not any(np.isnan(b) for v in tmp_results.values() for b in v.values()):
+                            results = tmp_results
+                            text_color = settings.text_color_ok # Set text to white when the coordinates are valid
 
-                            if not any(np.isnan(b) for v in tmp_results.values() for b in v.values()):
-                                results = tmp_results
-                                text_color = (255, 255, 255)
-                            else:
-                                text_color = (210, 210, 210) # gray out text when the coordinates are not valid
+        count = count + 1
 
-            count = count + 1
+        if 'results' in locals() and results is not None:
+            text_w_start = int(width*0.842)
+            text_h_start = int(height*0.20)
+            overlay_w_start = int(width*0.836)
+            overlay_w_end = int(width*0.961)
+            overlay_h_start = int(height*0.16)
+            overlay_h_end = int(height*0.694)
+            spacing = int(height/25)
+            text_size = height/1500
 
-            if 'results' in locals() and results is not None:
-                text_w_start = int(width*0.842)
-                text_h_start = int(height*0.20)
-                overlay_w_start = int(width*0.836)
-                overlay_w_end = int(width*0.961)
-                overlay_h_start = int(height*0.16)
-                overlay_h_end = int(height*0.694)
-                spacing = int(height/25)
-                text_size = height/1500
+            alpha = 0.25
+            overlay = frame.copy()
+            cv2.rectangle(overlay, (overlay_w_start, overlay_h_start), (overlay_w_end, overlay_h_end), (0,0,0), cv2.FILLED)
+            cv2.addWeighted(overlay, alpha, frame, 1 - alpha, 0, frame)
 
-                alpha = 0.25
-                overlay = frame.copy()
-                cv2.rectangle(overlay, (overlay_w_start, overlay_h_start), (overlay_w_end, overlay_h_end), (0,0,0), cv2.FILLED)
-                cv2.addWeighted(overlay, alpha, frame, 1 - alpha, 0, frame)
+            text_h = text_h_start
+            frame = cv2.putText(frame, 'Total', (text_w_start, text_h), cv2.FONT_HERSHEY_TRIPLEX, text_size, settings.title_color, 1, cv2.LINE_AA)
+            for key,value in results['total'].items():
+                text_h = text_h + spacing
+                text = f'{key}: {value:.2f} m/s'
+                frame = cv2.putText(frame, text, (text_w_start, text_h), cv2.FONT_HERSHEY_SIMPLEX, text_size, text_color, 1, cv2.LINE_AA)
 
-                text_h = text_h_start
-                frame = cv2.putText(frame, 'Total', (text_w_start, text_h), cv2.FONT_HERSHEY_TRIPLEX, text_size, text_color, 1, cv2.LINE_AA)
-                for key,value in results['total'].items():
-                    text_h = text_h + spacing
-                    text = f'{key}: {value:.2f} m/s'
-                    frame = cv2.putText(frame, text, (text_w_start, text_h), cv2.FONT_HERSHEY_SIMPLEX, text_size, text_color, 1, cv2.LINE_AA)
+            text_h = int(text_h + (1.5*spacing))
+            frame = cv2.putText(frame, 'Horizontal', (text_w_start, text_h), cv2.FONT_HERSHEY_TRIPLEX, text_size, settings.title_color, 1, cv2.LINE_AA)
+            for key,value in results['horizontal'].items():
+                text_h = text_h + spacing
+                text = f'{key}: {value:.2f} m/s'
+                frame = cv2.putText(frame, text, (text_w_start, text_h), cv2.FONT_HERSHEY_SIMPLEX, text_size, text_color, 1, cv2.LINE_AA)
 
-                text_h = int(text_h + (1.5*spacing))
-                frame = cv2.putText(frame, 'Horizontal', (text_w_start, text_h), cv2.FONT_HERSHEY_TRIPLEX, text_size, text_color, 1, cv2.LINE_AA)
-                for key,value in results['horizontal'].items():
-                    text_h = text_h + spacing
-                    text = f'{key}: {value:.2f} m/s'
-                    frame = cv2.putText(frame, text, (text_w_start, text_h), cv2.FONT_HERSHEY_SIMPLEX, text_size, text_color, 1, cv2.LINE_AA)
+            text_h = int(text_h + (1.5*spacing))
+            frame = cv2.putText(frame, 'Vertical', (text_w_start, text_h), cv2.FONT_HERSHEY_TRIPLEX, text_size, settings.title_color, 1, cv2.LINE_AA)
+            for key,value in results['vertical'].items():
+                text_h = text_h + spacing
+                text = f'{key}: {value:.2f} m/s'
+                frame = cv2.putText(frame, text, (text_w_start, text_h), cv2.FONT_HERSHEY_SIMPLEX, text_size, text_color, 1, cv2.LINE_AA)
 
-                text_h = int(text_h + (1.5*spacing))
-                frame = cv2.putText(frame, 'Vertical', (text_w_start, text_h), cv2.FONT_HERSHEY_TRIPLEX, text_size, text_color, 1, cv2.LINE_AA)
-                for key,value in results['vertical'].items():
-                    text_h = text_h + spacing
-                    text = f'{key}: {value:.2f} m/s'
-                    frame = cv2.putText(frame, text, (text_w_start, text_h), cv2.FONT_HERSHEY_SIMPLEX, text_size, text_color, 1, cv2.LINE_AA)
+        video_output.write(frame)
 
-            video_output.write(frame)
-
-            # # Uncomment these lines to see a live preview of the video with the speedometer stats
-            # cv2.imshow('TotK Speedometer', frame)
-            # # Hold 'q' key to quit
-            # if cv2.waitKey(1) & 0xFF == ord('q'):
-            #     return
-        else:
-            break
+        if settings.show_preview:
+            cv2.imshow('TotK Speedometer', frame)
+            # Press 'q' key to quit
+            if cv2.waitKey(1) & 0xFF == ord('q'):
+                return
 
     video.release()
     video_output.release()
@@ -295,7 +309,7 @@ def export_video_with_overlay(video_path):
     orig_audioclip = orig_clip.audio
     clip = VideoFileClip(tmp_filename)
     clip_with_audio = clip.set_audio(orig_audioclip)
-    clip_with_audio.write_videofile(output_filename, codec='libx264', audio_codec='aac')
+    clip_with_audio.write_videofile(output_filename, codec='libx264', audio_codec='aac', fps=fps)
     orig_clip.close()
     clip.close()
 
@@ -320,7 +334,7 @@ def detect_map(monitor_number):
         while True:
             sct_img = sct.grab(monitor)
             img = np.array(sct_img)
-            # cv2.imwrite('images/screenshot.png', img)
+            cv2.imwrite('images/screenshot.png', img)
 
             h, w, c = img.shape
             if mon['width']*2 == w:
@@ -330,7 +344,7 @@ def detect_map(monitor_number):
 
             circles, circles_img = detect_circle(img, w, h)
             if circles_img is not None:
-                cv2.imwrite('images/detected-circles.png', circles_img)
+                cv2.imwrite('images/detected_circles.png', circles_img)
 
             if circles is not None:
                 if len(circles[0])==1:
@@ -346,17 +360,19 @@ def detect_map(monitor_number):
                     }
 
                     sct_img = sct.grab(monitor_region)
-                    img = np.array(sct_img)
-                    cv2.imwrite('images/map.png', img)
+                    map_img = np.array(sct_img)
+                    cv2.imwrite('images/map.png', map_img)
 
-                    circles, circles_img = detect_circle(img, w, h)
+                    circles, circles_img = detect_circle(map_img, w, h)
                     if circles_img is not None:
-                        cv2.imwrite('images/detected-map-circles.png', circles_img)
+                        cv2.imwrite('images/detected_map_circles.png', circles_img)
 
                     if circles is not None:
                         if len(circles[0])==1:
                             map_circle = circles[0][0]
-                            coord = extract_coordinates(img, map_circle)
+                            coord_img = get_coord_img(map_img, map_circle)
+                            processed_img = preprocess_coord_img(coord_img)
+                            coord = extract_coordinates(processed_img)
                             if coord is not None:
                                 tmp_results = process_coordinates(coord, coord, 1)
                                 if tmp_results is not None:
@@ -395,11 +411,12 @@ class SpeedometerRunnable(QRunnable):
 
                 # Save the map screenshot
                 mss.tools.to_png(sct_img.rgb, sct_img.size, output='images/map.png')
+                map_img = np.array(sct_img)
 
-                # Get raw pixels from the screen, save it to a Numpy array
-                img = np.array(sct_img)
+                coord_img = get_coord_img(map_img, self.map_circle)
+                processed_img = preprocess_coord_img(coord_img)
+                coord = extract_coordinates(processed_img)
 
-                coord = extract_coordinates(img, self.map_circle)
                 if coord is not None:
                     if last_coord is None:
                         last_coord = coord
@@ -432,20 +449,23 @@ def main():
     parser = argparse.ArgumentParser(description='Speedometer for Zelda TotK')
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument('-f', dest='files', metavar='file', type=str, nargs='+', help='path to video file. Accepts multiple files')
-    group.add_argument('-s', '--screen', dest='screen', action='store_true', help='use screen capture and overlay stats')
+    group.add_argument('-s', dest='screen', action='store_true', help='use screen capture and overlay stats')
     parser.add_argument('-m', dest='monitor', default=1, type=int, help='monitor number to capture and display the overlay.')
+    group.add_argument('--test', dest='test', action='store_true', help='test image pre-processing')
     args = parser.parse_args()
 
     parser.add_argument('file', type=argparse.FileType('r'), nargs='+')
 
-    if args.files is None and args.screen is None:
+    if args.files is None and args.screen is False and args.test is False:
         parser.print_help()
         exit()
 
     if args.files is not None:
         for f in args.files:
-            export_video_with_overlay(f)
-    elif args.screen is not None:
+            if os.path.isfile(f): 
+                export_video_with_overlay(f)
+
+    elif args.screen:
         map_circle, monitor_sct = detect_map(args.monitor)
         app = QtWidgets.QApplication(sys.argv)
         mainwindow = SpeedometerOverlay()
@@ -456,6 +476,16 @@ def main():
         runnable = SpeedometerRunnable(mainwindow, monitor_sct, map_circle)
         QThreadPool.globalInstance().start(runnable)
         sys.exit(app.exec())
+
+    elif args.test:
+        map_img = cv2.imread('images/map.png')
+        width = 1280
+        height = 720
+        map_circle = [int(width*0.06875), int(height*0.1223), int(width*0.0641)]
+        coord_img = get_coord_img(map_img, map_circle)
+        processed_img = preprocess_coord_img(coord_img)
+        coord = extract_coordinates(processed_img)
+        print(coord)
 
 
 if __name__ == '__main__':
