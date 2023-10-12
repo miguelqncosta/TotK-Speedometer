@@ -185,7 +185,7 @@ def export_video_with_overlay(video_path):
     video = cv2.VideoCapture(video_path)
     width  = int(video.get(cv2.CAP_PROP_FRAME_WIDTH))
     height = int(video.get(cv2.CAP_PROP_FRAME_HEIGHT))
-    fps = int(video.get(cv2.CAP_PROP_FPS))
+    fps = video.get(cv2.CAP_PROP_FPS)
     h = int(video.get(cv2.CAP_PROP_FOURCC))
     codec = chr(h&0xff) + chr((h>>8)&0xff) + chr((h>>16)&0xff) + chr((h>>24)&0xff)
 
