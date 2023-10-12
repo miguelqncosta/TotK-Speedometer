@@ -27,7 +27,7 @@ def detect_circle(map_img, width, height):
     circles = cv2.HoughCircles(img, cv2.HOUGH_GRADIENT, 1, (height*0.2),
                             param1=80,
                             param2=60,
-                            minRadius=int(height*0.07),
+                            minRadius=int(height*0.04),
                             maxRadius=int(height*0.12)
                             )
 
@@ -45,6 +45,7 @@ def detect_circle(map_img, width, height):
         return circles, circles_img
     else:
         return None, None
+
 
 
 def get_coord_img(map_img, map_circle):
@@ -68,6 +69,7 @@ def get_coord_img(map_img, map_circle):
     return cropped_img
 
 
+
 def preprocess_coord_img(coord_img):
     coord_img = cv2.cvtColor(coord_img,cv2.COLOR_BGR2GRAY)
     blur_img = cv2.GaussianBlur(coord_img,(5,5),0)
@@ -89,6 +91,7 @@ def preprocess_coord_img(coord_img):
         cv2.imwrite('images/preprocessing/6_processed_img.png', processed_img)
 
     return processed_img
+
 
 
 def extract_coordinates(coord_img):
@@ -317,6 +320,7 @@ def export_video_with_overlay(video_path):
     os.remove(tmp_filename)
 
 
+
 def detect_map(monitor_number):
     with mss.mss() as sct:
         mon = sct.monitors[monitor_number]
@@ -329,7 +333,7 @@ def detect_map(monitor_number):
                 'mon': monitor_number,
             }
 
-        print('Trying to detect map position...')
+        print('Searching map position...')
 
         while True:
             sct_img = sct.grab(monitor)
@@ -347,9 +351,7 @@ def detect_map(monitor_number):
                 cv2.imwrite('images/detected_circles.png', circles_img)
 
             if circles is not None:
-                if len(circles[0])==1:
-                    map_circle = circles[0][0]
-
+                for map_circle in circles[0]:
                     # Capture only the screen part the map occupies
                     monitor_region = {
                         'top': mon['top']+(map_circle[1]-map_circle[2])/scaling - 20,
@@ -376,16 +378,8 @@ def detect_map(monitor_number):
                             if coord is not None:
                                 tmp_results = process_coordinates(coord, coord, 1)
                                 if tmp_results is not None:
-                                    print('\rMap position detected.                                         ')
+                                    print('Map position detected.')
                                     return map_circle, monitor_region
-                        else:
-                            print('\rCould not detect map circle. Too many circles were found.      ', end='')
-                    else:
-                        print('\rMap circle could not be found.                                 ', end='')
-                else:
-                    print('\rCould not detect map position. Too many positions were found.  ', end='')
-            else:
-                print('\rMap position could not be detected.                            ', end='')
 
 
 
