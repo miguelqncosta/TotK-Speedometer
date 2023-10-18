@@ -88,4 +88,9 @@ class SpeedometerOverlay(QMainWindow):
         self.widget.setLayout(self.layout)
 
     def mousePressEvent(self, event):
-        sys.exit(0)
+        self.dragPos = event.globalPosition().toPoint()
+
+    def mouseMoveEvent(self, event):
+        self.move(self.pos() + event.globalPosition().toPoint() - self.dragPos )
+        self.dragPos = event.globalPosition().toPoint()
+        event.accept()
