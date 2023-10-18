@@ -21,33 +21,6 @@ speed_h_list = []
 speed_v_list = []
 
 
-def detect_circle(map_img, width, height):
-    img = cv2.cvtColor(map_img,cv2.COLOR_BGR2GRAY)
-
-    circles = cv2.HoughCircles(img, cv2.HOUGH_GRADIENT, 1, (height*0.2),
-                            param1=80,
-                            param2=60,
-                            minRadius=int(height*0.04),
-                            maxRadius=int(height*0.12)
-                            )
-
-    if circles is not None:
-        circles = np.uint16(np.around(circles))
-        circles_img = img.copy()
-        circles_img = cv2.cvtColor(circles_img, cv2.COLOR_GRAY2BGR)
-
-        for i in circles[0,:]:
-            # draw the outer circle
-            cv2.circle(circles_img,(i[0],i[1]),i[2],(0,255,0),2)
-            # draw the center of the circle
-            cv2.circle(circles_img,(i[0],i[1]),2,(0,0,255),3)
-
-        return circles, circles_img
-    else:
-        return None, None
-
-
-
 def get_coord_img(map_img, map_circle):
     scaling = 16
 
@@ -367,6 +340,33 @@ def export_video_with_overlay(video_path):
 
 
 
+def detect_circle(map_img, height):
+    img = cv2.cvtColor(map_img,cv2.COLOR_BGR2GRAY)
+
+    circles = cv2.HoughCircles(img, cv2.HOUGH_GRADIENT, 1, (height*0.25),
+                            param1=120,
+                            param2=30,
+                            minRadius=int(height*0.05),
+                            maxRadius=int(height*0.12)
+                            )
+
+    if circles is not None:
+        circles = np.uint16(np.around(circles))
+        circles_img = img.copy()
+        circles_img = cv2.cvtColor(circles_img, cv2.COLOR_GRAY2BGR)
+
+        for i in circles[0,:]:
+            # draw the outer circle
+            cv2.circle(circles_img,(i[0],i[1]),i[2],(0,255,0),2)
+            # draw the center of the circle
+            cv2.circle(circles_img,(i[0],i[1]),2,(0,0,255),3)
+
+        return circles, circles_img
+    else:
+        return None, None
+
+
+
 def detect_map(monitor_number):
     with mss.mss() as sct:
         mon = sct.monitors[monitor_number]
@@ -394,7 +394,7 @@ def detect_map(monitor_number):
             else:
                 scaling = 1
 
-            circles, circles_img = detect_circle(img, w, h)
+            circles, circles_img = detect_circle(img, h)
             if circles_img is not None:
                 cv2.imwrite('images/detected_circles.png', circles_img)
 
@@ -413,7 +413,7 @@ def detect_map(monitor_number):
                     map_img = np.array(sct_img)
                     cv2.imwrite('images/map.png', map_img)
 
-                    circles, circles_img = detect_circle(map_img, w, h)
+                    circles, circles_img = detect_circle(map_img, h)
                     if circles_img is not None:
                         cv2.imwrite('images/detected_map_circles.png', circles_img)
 
