@@ -21,9 +21,7 @@ speed_h_list = []
 speed_v_list = []
 
 
-def get_coord_img(map_img, map_circle):
-    scaling = 16
-
+def get_coord_img(map_img, map_circle, scaling):
     polar_img = cv2.warpPolar(map_img, dsize=(
                                         map_img.shape[1]*scaling,
                                         map_img.shape[0]*scaling),
@@ -301,7 +299,7 @@ def export_video_with_overlay(video_path):
             cv2.imwrite('images/map.png', map_img)
 
         if count > settings.calc_every_x_frames:
-            coord_img = get_coord_img(map_img, map_circle)
+            coord_img = get_coord_img(map_img, map_circle, 16)
             processed_img = preprocess_coord_img(coord_img)
             ret, coord = extract_coordinates(processed_img)
             text_color = settings.text_color_fail # Set text color to gray when the coordinates are not valid
@@ -376,7 +374,7 @@ def detect_map(monitor_number):
                 'left': mon['left'],
                 'width': mon['width'],
                 'height': mon['height'],
-                'mon': monitor_number,
+                'mon': monitor_number
             }
 
         print('Searching map position...')
@@ -406,7 +404,7 @@ def detect_map(monitor_number):
                         'left': mon['left']+(map_circle[0]-map_circle[2])/scaling - 20,
                         'width': ((map_circle[2]*2)/scaling) + 40,
                         'height': ((map_circle[2]*2)/scaling) + 40,
-                        'mon': monitor_number,
+                        'mon': monitor_number
                     }
 
                     sct_img = sct.grab(monitor_region)
@@ -420,14 +418,14 @@ def detect_map(monitor_number):
                     if circles is not None:
                         if len(circles[0])==1:
                             map_circle = circles[0][0]
-                            coord_img = get_coord_img(map_img, map_circle)
+                            coord_img = get_coord_img(map_img, map_circle, int(8/scaling))
                             processed_img = preprocess_coord_img(coord_img)
                             ret, coord = extract_coordinates(processed_img)
                             if ret:
                                 tmp_speed_stats = process_coordinates(coord, coord, 1)
                                 if tmp_speed_stats is not None:
                                     print('Map position detected.')
-                                    return map_circle, monitor_region
+                                    return map_circle, monitor_region, scaling
                                 
             sleep_time = (1/settings.refresh_rate)-(time.time()-t_start)
             if sleep_time > 0:
@@ -436,11 +434,12 @@ def detect_map(monitor_number):
 
 
 class SpeedometerRunnable(QRunnable):
-    def __init__(self, mainwindow, monitor_sct, map_circle):
+    def __init__(self, mainwindow, monitor_sct, map_circle, scaling):
         super().__init__()
         self.mainwindow = mainwindow
         self.monitor_sct = monitor_sct
         self.map_circle = map_circle
+        self.scaling = scaling
         self.running = True
 
     def stop(self):
@@ -462,7 +461,8 @@ class SpeedometerRunnable(QRunnable):
                     mss.tools.to_png(sct_img.rgb, sct_img.size, output='images/map.png')
 
                 map_img = np.array(sct_img)
-                coord_img = get_coord_img(map_img, self.map_circle)
+                scaling = int(8/self.scaling)
+                coord_img = get_coord_img(map_img, self.map_circle, scaling)
                 processed_img = preprocess_coord_img(coord_img)
                 ret, coord = extract_coordinates(processed_img)
                 text_color = settings.text_color_fail # Set text color to gray when the coordinates are not valid
@@ -519,12 +519,12 @@ def main():
                 export_video_with_overlay(f)
 
     elif args.screen_capture:
-        map_circle, monitor_region = detect_map(args.monitor)
+        map_circle, monitor_region, scaling = detect_map(args.monitor)
         app = QtWidgets.QApplication(sys.argv)
         screen = app.screens()[args.monitor-1]
         mainwindow = SpeedometerOverlay(screen, monitor_region['left'], monitor_region['top'], monitor_region['width'])
         mainwindow.show()
-        runnable = SpeedometerRunnable(mainwindow, monitor_region, map_circle)
+        runnable = SpeedometerRunnable(mainwindow, monitor_region, map_circle, scaling)
         QThreadPool.globalInstance().start(runnable)
         sys.exit(app.exec())
 
@@ -533,7 +533,7 @@ def main():
         width = 1280
         height = 720
         map_circle = [int(width*0.06875), int(height*0.1223), int(width*0.0641)]
-        coord_img = get_coord_img(map_img, map_circle)
+        coord_img = get_coord_img(map_img, map_circle, 16)
         processed_img = preprocess_coord_img(coord_img)
         ret, coord = extract_coordinates(processed_img)
         print(coord)
