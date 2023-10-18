@@ -116,6 +116,8 @@ Running from screen capture will be more imprecise since it uses real time to ca
 
 The overlay will be automatically positioned above the map and can be dragged and repositioned. The overlay width is adjusted automatically to the map width but if you prefer to use a fixed width it can be defined in the [settings.py](settings.py) file.
 
+##### To quit use `Ctrl+C` on the terminal window.
+
 ```
 python3 totk-speedometer.py -s
 ```

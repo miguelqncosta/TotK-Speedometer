@@ -1,5 +1,6 @@
 
 import os
+import signal
 import sys
 import time
 
@@ -488,6 +489,8 @@ def main():
     args = parser.parse_args()
 
     parser.add_argument('file', type=argparse.FileType('r'), nargs='+')
+
+    signal.signal(signal.SIGINT, signal.SIG_DFL)
 
     if args.files is None and args.screen_capture is False and args.test is False:
         parser.print_help()
