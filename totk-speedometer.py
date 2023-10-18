@@ -10,7 +10,6 @@ import pytesseract
 from moviepy.editor import *
 from PyQt6 import QtWidgets
 from PyQt6.QtCore import QRunnable, QThreadPool
-from PyQt6.QtGui import QScreen
 
 import settings
 from overlay import SpeedometerOverlay
@@ -302,7 +301,7 @@ def export_video_with_overlay(video_path):
     h = int(video.get(cv2.CAP_PROP_FOURCC))
     codec = chr(h&0xff) + chr((h>>8)&0xff) + chr((h>>16)&0xff) + chr((h>>24)&0xff)
 
-    print(f'Video - Width: {width}, Height: {height}, FPS: {fps}, Enconding: {codec}')
+    print(f'Video - Width: {width}, Height: {height}, FPS: {fps}, Encoding: {codec}')
 
     path = os.path.dirname(video_path)
     filename = os.path.basename(video_path)
@@ -483,14 +482,14 @@ def main():
     parser = argparse.ArgumentParser(description='Speedometer for Zelda TotK')
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument('-f', dest='files', metavar='file', type=str, nargs='+', help='path to video file. Accepts multiple files')
-    group.add_argument('-s', dest='screen', action='store_true', help='use screen capture and overlay stats')
+    group.add_argument('-s', dest='screen_capture', action='store_true', help='use screen capture and overlay stats')
     parser.add_argument('-m', dest='monitor', default=1, type=int, help='monitor number to capture and display the overlay.')
     group.add_argument('--test', dest='test', action='store_true', help='test image pre-processing')
     args = parser.parse_args()
 
     parser.add_argument('file', type=argparse.FileType('r'), nargs='+')
 
-    if args.files is None and args.screen is False and args.test is False:
+    if args.files is None and args.screen_capture is False and args.test is False:
         parser.print_help()
         exit()
 
@@ -499,15 +498,13 @@ def main():
             if os.path.isfile(f): 
                 export_video_with_overlay(f)
 
-    elif args.screen:
-        map_circle, monitor_sct = detect_map(args.monitor)
+    elif args.screen_capture:
+        map_circle, monitor_region = detect_map(args.monitor)
         app = QtWidgets.QApplication(sys.argv)
-        mainwindow = SpeedometerOverlay()
-        monitors = QScreen.virtualSiblings(mainwindow.screen())
-        monitor = monitors[args.monitor-1].availableGeometry()
-        mainwindow.move(monitor.left() + settings.overlay_horizontal_pos, monitor.top() + settings.overlay_vertical_pos)
+        screen = app.screens()[args.monitor-1]
+        mainwindow = SpeedometerOverlay(screen, monitor_region['left'], monitor_region['top'], monitor_region['width'])
         mainwindow.show()
-        runnable = SpeedometerRunnable(mainwindow, monitor_sct, map_circle)
+        runnable = SpeedometerRunnable(mainwindow, monitor_region, map_circle)
         QThreadPool.globalInstance().start(runnable)
         sys.exit(app.exec())
 

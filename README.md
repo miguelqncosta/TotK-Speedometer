@@ -1,18 +1,20 @@
 
 # TotK Speedometer
 
-A speedometer for `Zelda - Tears of the Kingdom` that overlays speed information on top of a gameplay screen recording.
+A speedometer for `The Legend of Zelda: Tears of the Kingdom` that overlays speed information.
 
-Provides independent stats for horizontal, vertical and total (3D) speed:
+- **Video mode:** Add the overlay to video gameplay footage. Supports videos from the Switch's built-in screen recorder and videos captured from other sources like OBS.
+- **Real-time mode:** Creates a frameless window overlay on top of the game window from an emulator or OBS preview while playing with a HDMI capture card.
+
+Provides independent stats for total, horizontal and vertical speeds:
   - Current speed
     - Calculated every 10 frames for video (configurable in [settings.py](settings.py))
-    - Or as fast as it can for real-time screen capture
+    - As fast as it can for real-time screen capture
   - Average speed of the last 10 speed values
   - Maximum speed of the last 10 speed values
 
 
-[Watch the video demo on Youtube](https://youtu.be/f210KAuhMGI)
-
+## [Watch the demo on Youtube](https://youtu.be/f210KAuhMGI)
 
 ![Alt text](images/readme/demo.png "Demo Image")
 
@@ -25,7 +27,7 @@ Provides independent stats for horizontal, vertical and total (3D) speed:
 
 Tested on macOS 13.5 with python 3.9
 
-Works on every platform (macOS, Linux and Windows) as long as the dependencies are properlly installed.
+Works on every platform (macOS, Linux and Windows) as long as the dependencies are properly installed.
 
 
 
@@ -48,7 +50,7 @@ brew install ffmpeg
 ```
 
 #### Install Tesseract and FFmpeg from the official sites (HARDER)
-If you preffer not to use Homebrew you can install Tesseract and FFmpeg from the official sites.
+If you prefer not to use Homebrew you can install Tesseract and FFmpeg from the official sites.
 ##### Install Tesseract
 Follow the Installation instructions on the [official documentation](https://tesseract-ocr.github.io/tessdoc/Installation.html).
 
@@ -110,11 +112,15 @@ python3 totk-speedometer.py -f <path-to-totk-video-1>  <path-to-totk-video-2> ..
 ```
 
 ### Running from screen capture
+Running from screen capture will be more imprecise since it uses real time to calculate speed instead of the video FPS as a time base.
+
+The overlay will be automatically positioned above the map and can be dragged and repositioned. The overlay width is adjusted automatically to the map width but if you prefer to use a fixed width it can be defined in the [settings.py](settings.py) file.
+
 ```
 python3 totk-speedometer.py -s
 ```
 
-Select a difference monitor to capture (1, 2, 3, etc. Default is 1):
+To select a difference monitor to capture use the `-m` argument (1, 2, 3, etc. Default is 1):
 ```
 python3 totk-speedometer.py -s -m <monitor-number>
 ```
@@ -122,15 +128,13 @@ python3 totk-speedometer.py -s -m <monitor-number>
 
 
 ## Known issues:
-- The map underneed the coordinates can obfuscate them and make it very hard to read. This sometimes results in wrong coordinates or not being able to read the coordinates at all.
-- Running from screen capture can have a hard time detecting the map position. If it doens't work you can use the `images/detected_circles.png` and `images/detected_map_circles.png` to try to understand whats happening. Using a maximized window or a solid color background usually helps.
-- Running from screen capture will be more imprecise since it uses real time to calculate speed instead of the video FPS as a time base.
-- The overlay of the screen capture mode still has hardcoded size and position but it can be configured in the [settings.py](settings.py) file.
+- The map underneath the coordinates can obfuscate them and make it very hard to read. This sometimes results in wrong coordinates or not being able to read the coordinates at all.
+- Running from screen capture can have a hard time detecting the map position. If it doesn't work you can use the `images/detected_circles.png` and `images/detected_map_circles.png` to try to understand whats happening. Using a maximized window or a solid color background usually helps.
 
 
 ## Roadmap
 - [ ] Improve the image pre-processing for better coordinate readings.
-- [ ] Improve the overlay for real time speedometer display.
+- [X] Improve the overlay for real time speedometer display.
 - [ ] Improve the map position detection for the overlay mode.
 
 

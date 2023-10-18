@@ -14,8 +14,8 @@ max_speed = 100
 ### VIDEO MODE SETTINGS ###
 # Only used when running 'python3 totk-speedometer.py -f ...'
 
-# Read corrdinates and calculate speed every x frames
-# Reading every frame is very incacurate. For better results is is best to read every 5 or 10 frames.
+# Read coordinates and calculate speed every x frames
+# Reading every frame is very inaccurate. For better results is is best to read every 5 or 10 frames.
 calc_every_x_frames = 10
 
 # Name of the directory where the videos will be saved.
@@ -34,12 +34,9 @@ text_color_fail = (200, 200, 200) # grayed out text when the coordinates are not
 ### REAL-TIME OVERLAY SETTINGS ###
 # Only used when running 'python3 totk-speedometer.py -s'
 
-# Position for the real-time mode overlay
-# 0,0 is the top left corner of the screen
-overlay_vertical_pos = 500
-overlay_horizontal_pos = 2150
-overlay_width = 300
-overlay_height = 400
+# Width for the real-time mode overlay
+# If set to None it will be automatically adjusted to the map width
+overlay_width = None
 
 
 
