@@ -93,15 +93,15 @@ class SpeedometerOverlay(QMainWindow):
         self.l_avg_speed_v.setStyleSheet('color: rgb'+str(color)+';')
         self.l_max_speed_v.setStyleSheet('color: rgb'+str(color)+';')
 
-        self.l_speed.setText(f'Speed: {stats["total"]["Speed"]:0.2f} m/s')
-        self.l_avg_speed.setText(f'Avg: {stats["total"]["Avg"]:0.2f} m/s')
-        self.l_max_speed.setText(f'Max: {stats["total"]["Max"]:0.2f} m/s')
-        self.l_speed_h.setText(f'Speed: {stats["horizontal"]["Speed"]:0.2f} m/s')
-        self.l_avg_speed_h.setText(f'Avg: {stats["horizontal"]["Avg"]:0.2f} m/s')
-        self.l_max_speed_h.setText(f'Max: {stats["horizontal"]["Max"]:0.2f} m/s')
-        self.l_speed_v.setText(f'Speed: {stats["vertical"]["Speed"]:0.2f} m/s')
-        self.l_avg_speed_v.setText(f'Avg: {stats["vertical"]["Avg"]:0.2f} m/s')
-        self.l_max_speed_v.setText(f'Max: {stats["vertical"]["Max"]:0.2f} m/s')
+        self.l_speed.setText(f'Speed: {stats["total"]["Speed"]*settings.units[0]:0.2f} {settings.units[1]}')
+        self.l_avg_speed.setText(f'Avg: {stats["total"]["Avg"]*settings.units[0]:0.2f} {settings.units[1]}')
+        self.l_max_speed.setText(f'Max: {stats["total"]["Max"]*settings.units[0]:0.2f} {settings.units[1]}')
+        self.l_speed_h.setText(f'Speed: {stats["horizontal"]["Speed"]*settings.units[0]:0.2f} {settings.units[1]}')
+        self.l_avg_speed_h.setText(f'Avg: {stats["horizontal"]["Avg"]*settings.units[0]:0.2f} {settings.units[1]}')
+        self.l_max_speed_h.setText(f'Max: {stats["horizontal"]["Max"]*settings.units[0]:0.2f} {settings.units[1]}')
+        self.l_speed_v.setText(f'Speed: {stats["vertical"]["Speed"]*settings.units[0]:0.2f} {settings.units[1]}')
+        self.l_avg_speed_v.setText(f'Avg: {stats["vertical"]["Avg"]*settings.units[0]:0.2f} {settings.units[1]}')
+        self.l_max_speed_v.setText(f'Max: {stats["vertical"]["Max"]*settings.units[0]:0.2f} {settings.units[1]}')
 
 
     def center(self):

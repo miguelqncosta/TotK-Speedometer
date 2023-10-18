@@ -7,12 +7,11 @@ A speedometer for `The Legend of Zelda: Tears of the Kingdom` that overlays spee
 - **Real-time mode:** Creates a frameless window overlay on top of the game window from an emulator or OBS preview while playing with a HDMI capture card.
 
 Provides independent stats for total, horizontal and vertical speeds:
-  - Current speed
-    - Calculated every 10 frames for video (configurable in [settings.py](settings.py))
-    - As fast as it can for real-time screen capture
+  - Current speed calculated 3 times per second
   - Average speed of the last 10 speed values
   - Maximum speed of the last 10 speed values
 
+These values are configurable in [settings.py](settings.py)
 
 ## [Watch the demo on Youtube](https://youtu.be/f210KAuhMGI)
 
@@ -115,6 +114,8 @@ python3 totk-speedometer.py -f <path-to-totk-video-1>  <path-to-totk-video-2> ..
 Running from screen capture will be more imprecise since it uses real time to calculate speed instead of the video FPS as a time base.
 
 The overlay will be automatically positioned above the map and can be dragged and repositioned. The overlay width is adjusted automatically to the map width but if you prefer to use a fixed width it can be defined in the [settings.py](settings.py) file.
+
+The map position is only detected when the speedometer starts. If the game window is moved or resized the speedometer must be closed and reopened.
 
 ##### To quit use `Ctrl+C` on the terminal window.
 

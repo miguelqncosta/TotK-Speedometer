@@ -188,10 +188,10 @@ def print_stats(coord, last_coord, stats):
     print(f'Coord: {[f"{c:5}" for c in coord]}'
     f' - Last Coord {[f"{c:5}" for c in last_coord]}'
     f' - Distance: {stats["distance"]["Distance"]:8.2f} m'
-    f' - Speed: {stats["total"]["Speed"]:9.2f} m/s'
-    f' - AvgSpeed: {stats["total"]["Avg"]:5.2f} m/s'
-    f' - Speed H: {stats["horizontal"]["Speed"]:9.2f} m/s'
-    f' - Speed V: {stats["vertical"]["Speed"]:9.2f} m/s', end='')
+    f' - Speed: {stats["total"]["Speed"]*settings.units[0]:9.2f} {settings.units[1]}'
+    f' - AvgSpeed: {stats["total"]["Avg"]*settings.units[0]:5.2f} {settings.units[1]}'
+    f' - Speed H: {stats["horizontal"]["Speed"]*settings.units[0]:9.2f} {settings.units[1]}'
+    f' - Speed V: {stats["vertical"]["Speed"]*settings.units[0]:9.2f} {settings.units[1]}', end='')
 
     if not any(np.isnan(b) or b > settings.max_speed for v in stats.values() for b in v.values()):
         print()
@@ -219,21 +219,21 @@ def add_overlay(frame, speed_stats, width, height, text_color):
     frame = cv2.putText(frame, 'Total', (text_w_start, text_h), cv2.FONT_HERSHEY_TRIPLEX, text_size, settings.title_color, 1, cv2.LINE_AA)
     for key,value in speed_stats['total'].items():
         text_h = text_h + spacing
-        text = f'{key}: {value:.2f} m/s'
+        text = f'{key}: {value*settings.units[0]:.2f} {settings.units[1]}'
         frame = cv2.putText(frame, text, (text_w_start, text_h), cv2.FONT_HERSHEY_SIMPLEX, text_size, text_color, 1, cv2.LINE_AA)
 
     text_h = int(text_h + (1.5*spacing))
     frame = cv2.putText(frame, 'Horizontal', (text_w_start, text_h), cv2.FONT_HERSHEY_TRIPLEX, text_size, settings.title_color, 1, cv2.LINE_AA)
     for key,value in speed_stats['horizontal'].items():
         text_h = text_h + spacing
-        text = f'{key}: {value:.2f} m/s'
+        text = f'{key}: {value*settings.units[0]:.2f} {settings.units[1]}'
         frame = cv2.putText(frame, text, (text_w_start, text_h), cv2.FONT_HERSHEY_SIMPLEX, text_size, text_color, 1, cv2.LINE_AA)
 
     text_h = int(text_h + (1.5*spacing))
     frame = cv2.putText(frame, 'Vertical', (text_w_start, text_h), cv2.FONT_HERSHEY_TRIPLEX, text_size, settings.title_color, 1, cv2.LINE_AA)
     for key,value in speed_stats['vertical'].items():
         text_h = text_h + spacing
-        text = f'{key}: {value:.2f} m/s'
+        text = f'{key}: {value*settings.units[0]:.2f} {settings.units[1]}'
         frame = cv2.putText(frame, text, (text_w_start, text_h), cv2.FONT_HERSHEY_SIMPLEX, text_size, text_color, 1, cv2.LINE_AA)
     
     return frame
