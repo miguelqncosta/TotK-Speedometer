@@ -383,6 +383,8 @@ def detect_map(monitor_number):
         print('Searching map position...')
 
         while True:
+            t_start = time.time()
+
             sct_img = sct.grab(monitor)
             img = np.array(sct_img)
             cv2.imwrite('images/screenshot.png', img)
@@ -427,6 +429,10 @@ def detect_map(monitor_number):
                                 if tmp_speed_stats is not None:
                                     print('Map position detected.')
                                     return map_circle, monitor_region
+                                
+            sleep_time = (1/settings.refresh_rate)-(time.time()-t_start)
+            if sleep_time > 0:
+                time.sleep(sleep_time)
 
 
 
@@ -447,16 +453,20 @@ class SpeedometerRunnable(QRunnable):
 
         with mss.mss() as sct:
             while self.running:
+                t_start = time.time()
+
                 # Grab the map screenshot
                 sct_img = sct.grab(self.monitor_sct)
 
                 # Save the map screenshot
-                mss.tools.to_png(sct_img.rgb, sct_img.size, output='images/map.png')
-                map_img = np.array(sct_img)
+                if settings.save_preprocessing_images:
+                    mss.tools.to_png(sct_img.rgb, sct_img.size, output='images/map.png')
 
+                map_img = np.array(sct_img)
                 coord_img = get_coord_img(map_img, self.map_circle)
                 processed_img = preprocess_coord_img(coord_img)
                 ret, coord = extract_coordinates(processed_img)
+                text_color = settings.text_color_fail # Set text color to gray when the coordinates are not valid
 
                 if ret:
                     t = time.time()
@@ -466,14 +476,22 @@ class SpeedometerRunnable(QRunnable):
 
                         if not any(np.isnan(b) or b > settings.max_speed for v in tmp_speed_stats.values() for b in v.values()):
                             speed_stats = tmp_speed_stats
-                            self.mainwindow.update_labels(speed_stats, settings.text_color_ok)
-                        else:
-                            self.mainwindow.update_labels(speed_stats, settings.text_color_fail)
+                            text_color = settings.text_color_ok # Set text to white when the coordinates are valid
 
                     last_coord_time = t
                     last_coord = coord
                 else:
                     print('Invalid coordinates!', coord)
+
+                if 'speed_stats' in locals() and speed_stats is not None:
+                    self.mainwindow.update_labels(speed_stats, text_color)
+            
+                sleep_time = (1/settings.refresh_rate)-(time.time()-t_start)
+                if sleep_time > 0:
+                    time.sleep(sleep_time)
+
+                # # Uncoment this line to print the overlay refresh rate
+                # print('FPS:', 1/(time.time()-t_start))
 
 
 

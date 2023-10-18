@@ -34,6 +34,9 @@ show_preview = False
 ### REAL-TIME OVERLAY SETTINGS ###
 # Only used when running 'python3 totk-speedometer.py -s'
 
+# Maximum refresh rate
+refresh_rate = 3
+
 # Width for the real-time mode overlay
 # If set to None it will be automatically adjusted to the map width
 overlay_width = None
