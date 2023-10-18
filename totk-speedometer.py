@@ -117,33 +117,51 @@ def extract_coordinates(coord_img):
 
 def process_coordinates(coord, last_coord, time_delta):
     if len(coord)==3 and len(last_coord)==3 and all(isinstance(val, int) for val in coord+last_coord):
-        distance = np.sqrt((coord[0]-last_coord[0])**2 + (coord[1]-last_coord[1])**2 + (coord[2]-last_coord[2])**2)
-        distance_h = np.sqrt((coord[0]-last_coord[0])**2 + (coord[1]-last_coord[1])**2)
-        distance_v = np.sqrt((coord[2]-last_coord[2])**2)
+
+        # Use absolute coordinates if they are far enough from the map origin
+        # Only accounts for the coordinates sign near the (0,0,0) position to avoid errors from miss reading the minus sign
+        if abs(coord[0]) > 100 and abs(last_coord[0]) > 100:
+            coord_x = abs(coord[0])
+            last_coord_x = abs(last_coord[0])
+        else:
+            coord_x = coord[0]
+            last_coord_x = last_coord[0]
+
+        if abs(coord[1]) > 100 and abs(last_coord[1]) > 100:
+            coord_y = abs(coord[1])
+            last_coord_y = abs(last_coord[1])
+        else:
+            coord_y = coord[1]
+            last_coord_y = last_coord[1]
+
+        if abs(coord[2]) > 100 and abs(last_coord[2]) > 100:
+            coord_z = abs(coord[2])
+            last_coord_z = abs(last_coord[2])
+        else:
+            coord_z = coord[2]
+            last_coord_z = last_coord[2]
+
+        distance = np.sqrt((coord_x-last_coord_x)**2 + (coord_y-last_coord_y)**2 + (coord_z-last_coord_z)**2)
+        distance_h = np.sqrt((coord_x-last_coord_x)**2 + (coord_y-last_coord_y)**2)
+        distance_v = np.sqrt((coord_z-last_coord_z)**2)
 
         speed = distance/time_delta
-        if speed >= 100:
-            speed = float('nan')
-        else:
+        if speed <= settings.max_speed:
             speed_list.append(speed)
-            if len(speed_list) > settings.avg_length:
-                speed_list.pop(0)
+        if len(speed_list) > settings.avg_length:
+            speed_list.pop(0)
 
         speed_h = distance_h/time_delta
-        if speed_h >= 100:
-            speed_h = float('nan')
-        else:
+        if speed_h <= settings.max_speed:
             speed_h_list.append(speed_h)
-            if len(speed_h_list) > settings.avg_length:
-                speed_h_list.pop(0)
+        if len(speed_h_list) > settings.avg_length:
+            speed_h_list.pop(0)
 
         speed_v = distance_v/time_delta
-        if speed_v >= 100:
-            speed_v = float('nan')
-        else:
+        if speed_v <= settings.max_speed:
             speed_v_list.append(speed_v)
-            if len(speed_v_list) > settings.avg_length:
-                speed_v_list.pop(0)
+        if len(speed_v_list) > settings.avg_length:
+            speed_v_list.pop(0)
 
         if len(speed_list) > 0:
             avg_speed = sum(speed_list)/len(speed_list)
@@ -166,7 +184,7 @@ def process_coordinates(coord, last_coord, time_delta):
             avg_speed_v = float('nan')
             max_speed_v = float('nan')
 
-        results = {
+        speed_stats = {
                     'distance': {
                         'Distance': distance,
                         'Distance H': distance_h,
@@ -189,7 +207,7 @@ def process_coordinates(coord, last_coord, time_delta):
                     }
                 }
 
-        return results
+        return speed_stats
 
 
 
