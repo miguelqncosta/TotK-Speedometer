@@ -458,19 +458,19 @@ class SpeedometerRunnable(QRunnable):
                 ret, coord = extract_coordinates(processed_img)
 
                 if ret:
-                    if last_coord is None:
-                        last_coord = coord
-                        last_coord_time = time.time()
-                    else:
-                        t = time.time()
-                        speed_stats = process_coordinates(coord, last_coord, t-last_coord_time)
-                        last_coord_time = t
-                        last_coord = coord
+                    t = time.time()
+                    if last_coord is not None:
+                        tmp_speed_stats = process_coordinates(coord, last_coord, t-last_coord_time)
+                        print_stats(coord, last_coord, tmp_speed_stats)
 
-                        print_stats(coord, last_coord, speed_stats)
+                        if not any(np.isnan(b) or b > settings.max_speed for v in tmp_speed_stats.values() for b in v.values()):
+                            speed_stats = tmp_speed_stats
+                            self.mainwindow.update_labels(speed_stats, settings.text_color_ok)
+                        else:
+                            self.mainwindow.update_labels(speed_stats, settings.text_color_fail)
 
-                        if not any(np.isnan(b) or b > settings.max_speed for v in speed_stats.values() for b in v.values()):
-                            self.mainwindow.update_labels(speed_stats)
+                    last_coord_time = t
+                    last_coord = coord
                 else:
                     print('Invalid coordinates!', coord)
 

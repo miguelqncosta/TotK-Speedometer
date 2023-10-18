@@ -20,37 +20,35 @@ class SpeedometerOverlay(QMainWindow):
 
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
 
-        if settings.overlay_width is not None:
-            self.setGeometry(QRect(0, 0, settings.overlay_width, self.frameGeometry().height()))
-        else:
-            self.setGeometry(QRect(0, 0, map_width, self.frameGeometry().height()))
-
         self.widget = QWidget()
-        self.widget.setStyleSheet('color: white;')
+        self.widget.setStyleSheet('color: rgb'+str(settings.title_color)+';')
         self.layout = QVBoxLayout()
-        self.layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
         self.setStyleSheet("QLabel{font-size: 16pt;}")
 
-        current_time = str(datetime.datetime.now().strftime("%H:%M:%S"))
-        self.l_time = QLabel('Time: '+current_time)
+        if settings.overlay_width is not None:
+            self.setGeometry(QRect(0, 0, settings.overlay_width, self.frameGeometry().height()))
+            self.layout.setContentsMargins(int((settings.overlay_width-100)/2),20,20,20)
+        else:
+            self.setGeometry(QRect(0, 0, map_width, self.frameGeometry().height()))
+            self.layout.setContentsMargins(int((map_width-100)/2),20,20,20)
 
+        self.l_time = QLabel()
         self.l_total = QLabel('Total')
-        self.l_total.setStyleSheet("QLabel{font-size: 20pt; padding-top: 1em}")
-        self.l_speed = QLabel('Speed: 0.00 m/s')
-        self.l_avg_speed = QLabel('Avg: 0.00 m/s')
-        self.l_max_speed = QLabel('Max: 0.00 m/s')
-
+        self.l_total.setStyleSheet("QLabel{font-size: 20pt; padding-top: 1em;}")
+        self.l_speed = QLabel()
+        self.l_avg_speed = QLabel()
+        self.l_max_speed = QLabel()
         self.l_horizontal = QLabel('Horizontal')
         self.l_horizontal.setStyleSheet("QLabel{font-size: 20pt; padding-top: 1em}")
-        self.l_speed_h = QLabel('Speed: 0.00 m/s')
-        self.l_avg_speed_h = QLabel('Avg: 0.00 m/s')
-        self.l_max_speed_h = QLabel('Max: 0.00 m/s')
-
+        self.l_speed_h = QLabel()
+        self.l_avg_speed_h = QLabel()
+        self.l_max_speed_h = QLabel()
         self.l_vertical = QLabel('Vertical')
         self.l_vertical.setStyleSheet("QLabel{font-size: 20pt; padding-top: 1em}")
-        self.l_speed_v = QLabel('Speed: 0.00 m/s')
-        self.l_avg_speed_v = QLabel('Avg: 0.00 m/s')
-        self.l_max_speed_v = QLabel('Max: 0.00 m/s')
+        self.l_speed_v = QLabel()
+        self.l_avg_speed_v = QLabel()
+        self.l_max_speed_v = QLabel()
 
         self.layout.addWidget(self.l_time)
         self.layout.addWidget(self.l_total)
@@ -76,16 +74,25 @@ class SpeedometerOverlay(QMainWindow):
 
     def paintEvent(self, event=None):
         painter = QPainter(self)
-
         painter.setOpacity(0.2)
         painter.setBrush(QColor(0,0,0))
         painter.setPen(QPen(QColor(0,0,0)))
         painter.drawRect(self.rect())
 
 
-    def update_labels(self, stats):
+    def update_labels(self, stats, color):
         current_time = str(datetime.datetime.now().strftime("%H:%M:%S"))
         self.l_time.setText('Time: '+current_time)
+        self.l_speed.setStyleSheet('color: rgb'+str(color)+';')
+        self.l_avg_speed.setStyleSheet('color: rgb'+str(color)+';')
+        self.l_max_speed.setStyleSheet('color: rgb'+str(color)+';')
+        self.l_speed_h.setStyleSheet('color: rgb'+str(color)+';')
+        self.l_avg_speed_h.setStyleSheet('color: rgb'+str(color)+';')
+        self.l_max_speed_h.setStyleSheet('color: rgb'+str(color)+';')
+        self.l_speed_v.setStyleSheet('color: rgb'+str(color)+';')
+        self.l_avg_speed_v.setStyleSheet('color: rgb'+str(color)+';')
+        self.l_max_speed_v.setStyleSheet('color: rgb'+str(color)+';')
+
         self.l_speed.setText(f'Speed: {stats["total"]["Speed"]:0.2f} m/s')
         self.l_avg_speed.setText(f'Avg: {stats["total"]["Avg"]:0.2f} m/s')
         self.l_max_speed.setText(f'Max: {stats["total"]["Max"]:0.2f} m/s')
@@ -95,7 +102,6 @@ class SpeedometerOverlay(QMainWindow):
         self.l_speed_v.setText(f'Speed: {stats["vertical"]["Speed"]:0.2f} m/s')
         self.l_avg_speed_v.setText(f'Avg: {stats["vertical"]["Avg"]:0.2f} m/s')
         self.l_max_speed_v.setText(f'Max: {stats["vertical"]["Max"]:0.2f} m/s')
-        self.widget.setLayout(self.layout)
 
 
     def center(self):

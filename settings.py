@@ -9,6 +9,11 @@ avg_length = 10
 # Speeds above this value are considered to be from bad coordinate readings and are invalidated
 max_speed = 100
 
+# Overlay text  colors
+title_color = (255, 255, 255)
+text_color_ok = (255, 255, 255) # white text when the coordinates are OK
+text_color_fail = (200, 200, 200) # grayed out text when the coordinates are not valid
+
 
 
 ### VIDEO MODE SETTINGS ###
@@ -23,11 +28,6 @@ output_directory = 'totk-speedometer-videos'
 
 # Show preview while creating the video
 show_preview = False
-
-# Text overlay colors
-title_color = (255, 255, 255)
-text_color_ok = (255, 255, 255) # white text when the coordinates are OK
-text_color_fail = (200, 200, 200) # grayed out text when the coordinates are not valid
 
 
 
