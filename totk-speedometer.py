@@ -350,13 +350,12 @@ def export_video_with_overlay(video_path):
         count = count + 1
 
         if 'speed_stats' in locals() and speed_stats is not None:
-            frame_with_overlay = add_overlay(frame, speed_stats, width, height, text_color)
-            tmp_video.write(frame_with_overlay)
-        else:
-            tmp_video.write(frame)
+            frame = add_overlay(frame, speed_stats, width, height, text_color)
+
+        tmp_video.write(frame)
 
         if settings.show_preview:
-            cv2.imshow('TotK Speedometer', frame_with_overlay)
+            cv2.imshow('TotK Speedometer', frame)
             # Press 'q' key to quit
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 return
