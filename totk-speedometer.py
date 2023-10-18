@@ -101,17 +101,19 @@ def extract_coordinates(coord_img):
     if '-' in coord_list:
         coord_list.remove('-')
 
+    coord_list = [c.rstrip('-') for c in coord_list]
+
     try:
         if isinstance(text, str) and text != '':
             coord = [int(c) for c in coord_list]
 
             if len(coord) == 3:
                 if (5000 > coord[0] > -5000 and 4000 > coord[1] > -4000 and 3500 > coord[2] > -3000):
-                    return coord
+                    return True, coord
     except ValueError:
-        return None
+        return False, coord_list
 
-    return None
+    return False, coord_list
 
 
 
@@ -211,6 +213,85 @@ def process_coordinates(coord, last_coord, time_delta):
 
 
 
+def print_stats(coord, last_coord, stats):
+    print(f'Coord: {[f"{c:5}" for c in coord]}'
+    f' - Last Coord {[f"{c:5}" for c in last_coord]}'
+    f' - Distance: {stats["distance"]["Distance"]:8.2f} m'
+    f' - Speed: {stats["total"]["Speed"]:9.2f} m/s'
+    f' - AvgSpeed: {stats["total"]["Avg"]:5.2f} m/s'
+    f' - Speed H: {stats["horizontal"]["Speed"]:9.2f} m/s'
+    f' - Speed V: {stats["vertical"]["Speed"]:9.2f} m/s', end='')
+
+    if not any(np.isnan(b) or b > settings.max_speed for v in stats.values() for b in v.values()):
+        print()
+    else:
+        print(' - Bad Coordinates - max speed exceeded!')
+
+
+
+def add_overlay(frame, speed_stats, width, height, text_color):
+    text_w_start = int(width*0.842)
+    text_h_start = int(height*0.20)
+    overlay_w_start = int(width*0.836)
+    overlay_w_end = int(width*0.961)
+    overlay_h_start = int(height*0.16)
+    overlay_h_end = int(height*0.694)
+    spacing = int(height/25)
+    text_size = height/1500
+
+    alpha = 0.25
+    overlay = frame.copy()
+    cv2.rectangle(overlay, (overlay_w_start, overlay_h_start), (overlay_w_end, overlay_h_end), (0,0,0), cv2.FILLED)
+    cv2.addWeighted(overlay, alpha, frame, 1 - alpha, 0, frame)
+
+    text_h = text_h_start
+    frame = cv2.putText(frame, 'Total', (text_w_start, text_h), cv2.FONT_HERSHEY_TRIPLEX, text_size, settings.title_color, 1, cv2.LINE_AA)
+    for key,value in speed_stats['total'].items():
+        text_h = text_h + spacing
+        text = f'{key}: {value:.2f} m/s'
+        frame = cv2.putText(frame, text, (text_w_start, text_h), cv2.FONT_HERSHEY_SIMPLEX, text_size, text_color, 1, cv2.LINE_AA)
+
+    text_h = int(text_h + (1.5*spacing))
+    frame = cv2.putText(frame, 'Horizontal', (text_w_start, text_h), cv2.FONT_HERSHEY_TRIPLEX, text_size, settings.title_color, 1, cv2.LINE_AA)
+    for key,value in speed_stats['horizontal'].items():
+        text_h = text_h + spacing
+        text = f'{key}: {value:.2f} m/s'
+        frame = cv2.putText(frame, text, (text_w_start, text_h), cv2.FONT_HERSHEY_SIMPLEX, text_size, text_color, 1, cv2.LINE_AA)
+
+    text_h = int(text_h + (1.5*spacing))
+    frame = cv2.putText(frame, 'Vertical', (text_w_start, text_h), cv2.FONT_HERSHEY_TRIPLEX, text_size, settings.title_color, 1, cv2.LINE_AA)
+    for key,value in speed_stats['vertical'].items():
+        text_h = text_h + spacing
+        text = f'{key}: {value:.2f} m/s'
+        frame = cv2.putText(frame, text, (text_w_start, text_h), cv2.FONT_HERSHEY_SIMPLEX, text_size, text_color, 1, cv2.LINE_AA)
+    
+    return frame
+
+
+
+def export_video(video_path, fps):
+    path = os.path.dirname(video_path)
+    filename = os.path.basename(video_path)
+    name = os.path.splitext(filename)[0]
+    ext = os.path.splitext(filename)[1]
+    os.makedirs(os.path.join(path, settings.output_directory), exist_ok=True)
+    tmp_filename = os.path.join(path, settings.output_directory, name+'_speedometer_tmp'+ext)
+    output_filename = os.path.join(path, settings.output_directory, name+'_speedometer'+ext)
+
+    # Add audio from original video
+    orig_clip = VideoFileClip(video_path)
+    orig_audioclip = orig_clip.audio
+    tmp_clip = VideoFileClip(tmp_filename)
+    clip_with_audio = tmp_clip.set_audio(orig_audioclip)
+    clip_with_audio.write_videofile(output_filename, codec='libx264', audio_codec='aac', fps=fps)
+    orig_clip.close()
+    tmp_clip.close()
+
+    # Remove temporary video file
+    os.remove(tmp_filename)
+
+
+
 def export_video_with_overlay(video_path):
     print('Processing video: ' + video_path)
 
@@ -229,8 +310,7 @@ def export_video_with_overlay(video_path):
     ext = os.path.splitext(filename)[1]
     os.makedirs(os.path.join(path, settings.output_directory), exist_ok=True)
     tmp_filename = os.path.join(path, settings.output_directory, name+'_speedometer_tmp'+ext)
-    output_filename = os.path.join(path, settings.output_directory, name+'_speedometer'+ext)
-    video_output = cv2.VideoWriter(tmp_filename, cv2.VideoWriter_fourcc(*'avc1'), fps, (width, height))
+    tmp_video = cv2.VideoWriter(tmp_filename, cv2.VideoWriter_fourcc(*'avc1'), fps, (width, height))
 
     count = 0
     map_circle = None
@@ -250,92 +330,41 @@ def export_video_with_overlay(video_path):
         if count > settings.calc_every_x_frames:
             coord_img = get_coord_img(map_img, map_circle)
             processed_img = preprocess_coord_img(coord_img)
-            coord = extract_coordinates(processed_img)
+            ret, coord = extract_coordinates(processed_img)
             text_color = settings.text_color_fail # Set text color to gray when the coordinates are not valid
 
-            if coord is not None:
-                if last_coord is None:
-                    last_coord = coord
-                    count = 0
-                else:
-                    tmp_results = process_coordinates(coord, last_coord, (1/fps)*count)
-                    if tmp_results is not None:
-                        print(f'Coord: {[f"{c:5}" for c in coord]}'
-                        f' - Last Coord {[f"{c:5}" for c in last_coord]}'
-                        f' - Distance: {tmp_results["distance"]["Distance"]:6.2f} m'
-                        f' - Speed: {tmp_results["total"]["Speed"]:5.2f} m/s'
-                        f' - AvgSpeed: {tmp_results["total"]["Avg"]:5.2f} m/s'
-                        f' - Speed H: {tmp_results["horizontal"]["Speed"]:5.2f} m/s'
-                        f' - Speed V: {tmp_results["vertical"]["Speed"]:5.2f} m/s')
+            if ret:
+                if last_coord is not None:
+                    tmp_speed_stats = process_coordinates(coord, last_coord, (1/fps)*count)
+                    print_stats(coord, last_coord, tmp_speed_stats)
 
-                        last_coord = coord
-                        count = 0
+                    if not any(np.isnan(b) or b > settings.max_speed for v in tmp_speed_stats.values() for b in v.values()):
+                        speed_stats = tmp_speed_stats
+                        text_color = settings.text_color_ok # Set text to white when the coordinates are valid
 
-                        if not any(np.isnan(b) for v in tmp_results.values() for b in v.values()):
-                            results = tmp_results
-                            text_color = settings.text_color_ok # Set text to white when the coordinates are valid
+                last_coord = coord
+                count = 0
+            else:
+                print('Invalid coordinates!', coord)
 
         count = count + 1
 
-        if 'results' in locals() and results is not None:
-            text_w_start = int(width*0.842)
-            text_h_start = int(height*0.20)
-            overlay_w_start = int(width*0.836)
-            overlay_w_end = int(width*0.961)
-            overlay_h_start = int(height*0.16)
-            overlay_h_end = int(height*0.694)
-            spacing = int(height/25)
-            text_size = height/1500
-
-            alpha = 0.25
-            overlay = frame.copy()
-            cv2.rectangle(overlay, (overlay_w_start, overlay_h_start), (overlay_w_end, overlay_h_end), (0,0,0), cv2.FILLED)
-            cv2.addWeighted(overlay, alpha, frame, 1 - alpha, 0, frame)
-
-            text_h = text_h_start
-            frame = cv2.putText(frame, 'Total', (text_w_start, text_h), cv2.FONT_HERSHEY_TRIPLEX, text_size, settings.title_color, 1, cv2.LINE_AA)
-            for key,value in results['total'].items():
-                text_h = text_h + spacing
-                text = f'{key}: {value:.2f} m/s'
-                frame = cv2.putText(frame, text, (text_w_start, text_h), cv2.FONT_HERSHEY_SIMPLEX, text_size, text_color, 1, cv2.LINE_AA)
-
-            text_h = int(text_h + (1.5*spacing))
-            frame = cv2.putText(frame, 'Horizontal', (text_w_start, text_h), cv2.FONT_HERSHEY_TRIPLEX, text_size, settings.title_color, 1, cv2.LINE_AA)
-            for key,value in results['horizontal'].items():
-                text_h = text_h + spacing
-                text = f'{key}: {value:.2f} m/s'
-                frame = cv2.putText(frame, text, (text_w_start, text_h), cv2.FONT_HERSHEY_SIMPLEX, text_size, text_color, 1, cv2.LINE_AA)
-
-            text_h = int(text_h + (1.5*spacing))
-            frame = cv2.putText(frame, 'Vertical', (text_w_start, text_h), cv2.FONT_HERSHEY_TRIPLEX, text_size, settings.title_color, 1, cv2.LINE_AA)
-            for key,value in results['vertical'].items():
-                text_h = text_h + spacing
-                text = f'{key}: {value:.2f} m/s'
-                frame = cv2.putText(frame, text, (text_w_start, text_h), cv2.FONT_HERSHEY_SIMPLEX, text_size, text_color, 1, cv2.LINE_AA)
-
-        video_output.write(frame)
+        if 'speed_stats' in locals() and speed_stats is not None:
+            frame_with_overlay = add_overlay(frame, speed_stats, width, height, text_color)
+            tmp_video.write(frame_with_overlay)
+        else:
+            tmp_video.write(frame)
 
         if settings.show_preview:
-            cv2.imshow('TotK Speedometer', frame)
+            cv2.imshow('TotK Speedometer', frame_with_overlay)
             # Press 'q' key to quit
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 return
 
     video.release()
-    video_output.release()
+    tmp_video.release()
     cv2.destroyAllWindows()
-
-    # Add audio from original video
-    orig_clip = VideoFileClip(video_path)
-    orig_audioclip = orig_clip.audio
-    clip = VideoFileClip(tmp_filename)
-    clip_with_audio = clip.set_audio(orig_audioclip)
-    clip_with_audio.write_videofile(output_filename, codec='libx264', audio_codec='aac', fps=fps)
-    orig_clip.close()
-    clip.close()
-
-    # Remove temporary video file
-    os.remove(tmp_filename)
+    export_video(video_path, fps)
 
 
 
@@ -392,10 +421,10 @@ def detect_map(monitor_number):
                             map_circle = circles[0][0]
                             coord_img = get_coord_img(map_img, map_circle)
                             processed_img = preprocess_coord_img(coord_img)
-                            coord = extract_coordinates(processed_img)
-                            if coord is not None:
-                                tmp_results = process_coordinates(coord, coord, 1)
-                                if tmp_results is not None:
+                            ret, coord = extract_coordinates(processed_img)
+                            if ret:
+                                tmp_speed_stats = process_coordinates(coord, coord, 1)
+                                if tmp_speed_stats is not None:
                                     print('Map position detected.')
                                     return map_circle, monitor_region
 
@@ -427,31 +456,24 @@ class SpeedometerRunnable(QRunnable):
 
                 coord_img = get_coord_img(map_img, self.map_circle)
                 processed_img = preprocess_coord_img(coord_img)
-                coord = extract_coordinates(processed_img)
+                ret, coord = extract_coordinates(processed_img)
 
-                if coord is not None:
+                if ret:
                     if last_coord is None:
                         last_coord = coord
                         last_coord_time = time.time()
                     else:
                         t = time.time()
-                        results = process_coordinates(coord, last_coord, t-last_coord_time)
+                        speed_stats = process_coordinates(coord, last_coord, t-last_coord_time)
+                        last_coord_time = t
+                        last_coord = coord
 
-                        if results is not None:
-                            print(f'Coord: {[f"{c:5}" for c in coord]}'
-                            f' - Last Coord {[f"{c:5}" for c in last_coord]}'
-                            f' - Distance: {results["distance"]["Distance"]:6.2f} m'
-                            f' - Speed: {results["total"]["Speed"]:5.2f} m/s'
-                            f' - AvgSpeed: {results["total"]["Avg"]:5.2f} m/s'
-                            f' - Speed H: {results["horizontal"]["Speed"]:5.2f} m/s'
-                            f' - Speed V: {results["vertical"]["Speed"]:5.2f} m/s')
+                        print_stats(coord, last_coord, speed_stats)
 
-                            last_coord_time = t
-                            last_coord = coord
-
-                            if not any(np.isnan(b) for v in results.values() for b in v.values()):
-                                self.mainwindow.update_labels(results)
-                                time.sleep(0.01)
+                        if not any(np.isnan(b) or b > settings.max_speed for v in speed_stats.values() for b in v.values()):
+                            self.mainwindow.update_labels(speed_stats)
+                else:
+                    print('Invalid coordinates!', coord)
 
 
 
@@ -496,7 +518,7 @@ def main():
         map_circle = [int(width*0.06875), int(height*0.1223), int(width*0.0641)]
         coord_img = get_coord_img(map_img, map_circle)
         processed_img = preprocess_coord_img(coord_img)
-        coord = extract_coordinates(processed_img)
+        ret, coord = extract_coordinates(processed_img)
         print(coord)
 
 

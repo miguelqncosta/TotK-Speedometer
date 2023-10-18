@@ -17,6 +17,7 @@ Provides independent stats for horizontal, vertical and total (3D) speed:
 ![Alt text](images/readme/demo.png "Demo Image")
 
 
+
 ## Requirements
 - python 3.9
 - tesseract 5.3.2
@@ -25,6 +26,8 @@ Provides independent stats for horizontal, vertical and total (3D) speed:
 Tested on macOS 13.5 with python 3.9
 
 Works on every platform (macOS, Linux and Windows) as long as the dependencies are properlly installed.
+
+
 
 ## Installation
 
@@ -36,11 +39,10 @@ If you don't have Homebrew you can follow the instructions on [brew.sh](https://
 
 To use Homebrew on Windows you can use the [Windows Subsystem for Linux](https://learn.microsoft.com/en-us/windows/wsl/about)
 
-
-
 ```
 brew install tesseract
 ```
+
 ```
 brew install ffmpeg
 ```
@@ -76,8 +78,12 @@ python3 -m pip install --upgrade pip
 python3 -m pip install -r requirements.txt
 ```
 
+
+
 ## Configure
 See the file [settings.py](settings.py) to configure the TotK Speedometer.
+
+
 
 ## Usage
 
@@ -94,7 +100,7 @@ python3 totk-speedometer.py -f <path-to-totk-video>
 Example:
 ```
 python3 totk-speedometer.py -f '/Users/miguelcosta/Downloads/totk-videos/2023100123530500-CC47F0DEC75C1FD3B1F95FA9F9D57667.mp4'
-``````
+```
 
 Output files are saved to `<path-to-totk-video>/totk-speedometer-videos/`
 
@@ -114,24 +120,29 @@ python3 totk-speedometer.py -s -m <monitor-number>
 ```
 
 
+
 ## Known issues:
 - The map underneed the coordinates can obfuscate them and make it very hard to read. This sometimes results in wrong coordinates or not being able to read the coordinates at all.
 - Running from screen capture can have a hard time detecting the map position. If it doens't work you can use the `images/detected_circles.png` and `images/detected_map_circles.png` to try to understand whats happening. Using a maximized window or a solid color background usually helps.
 - Running from screen capture will be more imprecise since it uses real time to calculate speed instead of the video FPS as a time base.
 - The overlay of the screen capture mode still has hardcoded size and position but it can be configured in the [settings.py](settings.py) file.
 
+
 ## Roadmap
 - [ ] Improve the image pre-processing for better coordinate readings.
 - [ ] Improve the overlay for real time speedometer display.
 - [ ] Improve the map position detection for the overlay mode.
 
+
 ## License
 Distributed under the MIT License. See `LICENSE.txt` for more information.
+
 
 ## Support
 If you find any issues with it please report them in the [issue tracker](https://github.com/miguelqncosta/TotK-Speedometer/issues).
 
 Keep in mind that this is a hobby project for a game, so keep a light mood and lets improve the TotK Speedometer for everyone!
+
 
 ## Contributing
 Any contributions you make are **greatly appreciated**.
@@ -144,6 +155,7 @@ Don't forget to give the project a star! Thanks again!
 3. Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
 4. Push to the Branch (`git push origin feature/AmazingFeature`)
 5. Open a Pull Request
+
 
 ## Donate
 If you want to buy me a coffee you can make a donation using the PayPal button bellow.
