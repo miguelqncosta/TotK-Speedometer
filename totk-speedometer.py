@@ -400,10 +400,10 @@ def detect_map(monitor_number):
                 for map_circle in circles[0]:
                     # Capture only the screen part the map occupies
                     monitor_region = {
-                        'top': mon['top']+(map_circle[1]-map_circle[2])/scaling - 20,
-                        'left': mon['left']+(map_circle[0]-map_circle[2])/scaling - 20,
-                        'width': ((map_circle[2]*2)/scaling) + 40,
-                        'height': ((map_circle[2]*2)/scaling) + 40,
+                        'top': int(mon['top']+(map_circle[1]-map_circle[2])/scaling - 20),
+                        'left': int(mon['left']+(map_circle[0]-map_circle[2])/scaling - 20),
+                        'width': int(((map_circle[2]*2)/scaling) + 40),
+                        'height': int(((map_circle[2]*2)/scaling) + 40),
                         'mon': monitor_number
                     }
 
