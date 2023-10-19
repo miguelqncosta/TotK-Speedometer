@@ -142,7 +142,7 @@ class SpeedometerOverlay(QMainWindow):
         geo.moveCenter(self.screen.geometry().center())
         height = self.frameGeometry().height()
         width = self.frameGeometry().width()
-        pos = QPoint(self.map_left, self.map_top) + QPoint(self.map_width/2 - width/2, -height)
+        pos = QPoint(self.map_left + settings.horizontal_offset, self.map_top - settings.vertical_offset) + QPoint(self.map_width/2 - width/2, - height)
         self.move(pos)
 
             
