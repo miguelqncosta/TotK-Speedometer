@@ -488,8 +488,10 @@ class SpeedometerRunnable(QRunnable):
                 else:
                     print('Invalid coordinates!', coord)
 
-                if 'speed_stats' in locals() and speed_stats is not None:
+                if 'speed_stats' in locals():
                     self.mainwindow.update_labels(speed_stats, text_color)
+                else:
+                    self.mainwindow.update_labels(None, text_color)
             
                 sleep_time = (1/settings.refresh_rate)-(time.time()-t_start)
                 if sleep_time > 0:

@@ -3,7 +3,7 @@ import datetime
 
 from PyQt6.QtCore import QPoint, QRect, Qt
 from PyQt6.QtGui import QColor, QPainter, QPen
-from PyQt6.QtWidgets import QLabel, QMainWindow, QVBoxLayout, QWidget, QPushButton
+from PyQt6.QtWidgets import QLabel, QMainWindow, QPushButton, QVBoxLayout, QWidget
 
 import settings
 
@@ -94,6 +94,7 @@ class SpeedometerOverlay(QMainWindow):
     def update_labels(self, stats, color):
         current_time = str(datetime.datetime.now().strftime('%H:%M:%S'))
         self.l_time.setText('Time: '+current_time)
+
         self.l_speed.setStyleSheet('color: rgb'+str(color)+';')
         self.l_avg_speed.setStyleSheet('color: rgb'+str(color)+';')
         self.l_max_speed.setStyleSheet('color: rgb'+str(color)+';')
@@ -104,15 +105,16 @@ class SpeedometerOverlay(QMainWindow):
         self.l_avg_speed_v.setStyleSheet('color: rgb'+str(color)+';')
         self.l_max_speed_v.setStyleSheet('color: rgb'+str(color)+';')
 
-        self.l_speed.setText(f'Speed: {stats["total"]["Speed"]*settings.units[0]:0.2f} {settings.units[1]}')
-        self.l_avg_speed.setText(f'Avg: {stats["total"]["Avg"]*settings.units[0]:0.2f} {settings.units[1]}')
-        self.l_max_speed.setText(f'Max: {stats["total"]["Max"]*settings.units[0]:0.2f} {settings.units[1]}')
-        self.l_speed_h.setText(f'Speed: {stats["horizontal"]["Speed"]*settings.units[0]:0.2f} {settings.units[1]}')
-        self.l_avg_speed_h.setText(f'Avg: {stats["horizontal"]["Avg"]*settings.units[0]:0.2f} {settings.units[1]}')
-        self.l_max_speed_h.setText(f'Max: {stats["horizontal"]["Max"]*settings.units[0]:0.2f} {settings.units[1]}')
-        self.l_speed_v.setText(f'Speed: {stats["vertical"]["Speed"]*settings.units[0]:0.2f} {settings.units[1]}')
-        self.l_avg_speed_v.setText(f'Avg: {stats["vertical"]["Avg"]*settings.units[0]:0.2f} {settings.units[1]}')
-        self.l_max_speed_v.setText(f'Max: {stats["vertical"]["Max"]*settings.units[0]:0.2f} {settings.units[1]}')
+        if stats is not None:
+            self.l_speed.setText(f'Speed: {stats["total"]["Speed"]*settings.units[0]:0.2f} {settings.units[1]}')
+            self.l_avg_speed.setText(f'Avg: {stats["total"]["Avg"]*settings.units[0]:0.2f} {settings.units[1]}')
+            self.l_max_speed.setText(f'Max: {stats["total"]["Max"]*settings.units[0]:0.2f} {settings.units[1]}')
+            self.l_speed_h.setText(f'Speed: {stats["horizontal"]["Speed"]*settings.units[0]:0.2f} {settings.units[1]}')
+            self.l_avg_speed_h.setText(f'Avg: {stats["horizontal"]["Avg"]*settings.units[0]:0.2f} {settings.units[1]}')
+            self.l_max_speed_h.setText(f'Max: {stats["horizontal"]["Max"]*settings.units[0]:0.2f} {settings.units[1]}')
+            self.l_speed_v.setText(f'Speed: {stats["vertical"]["Speed"]*settings.units[0]:0.2f} {settings.units[1]}')
+            self.l_avg_speed_v.setText(f'Avg: {stats["vertical"]["Avg"]*settings.units[0]:0.2f} {settings.units[1]}')
+            self.l_max_speed_v.setText(f'Max: {stats["vertical"]["Max"]*settings.units[0]:0.2f} {settings.units[1]}')
 
 
     def paintEvent(self, event=None):
