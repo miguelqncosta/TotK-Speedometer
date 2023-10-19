@@ -65,6 +65,12 @@ horizontal_offset = 0
 ## A positive value moves the overlay up and a negative value moves the overlay down.
 vertical_offset = 0
 
+## Font sizes 
+title_font_size = 24
+text_font_size = 20
+
+
+
 
 ##### DEBUGGING SETTINGS #####
 

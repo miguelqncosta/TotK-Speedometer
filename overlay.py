@@ -28,34 +28,34 @@ class SpeedometerOverlay(QMainWindow):
         self.widget.setStyleSheet('color: rgb'+str(settings.title_color)+';')
         self.layout = QVBoxLayout()
         self.layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
-        self.setStyleSheet('QLabel{font-size: 16pt;}')
+        self.setStyleSheet('QLabel{font-size: '+str(settings.text_font_size)+'pt;}')
 
         # Close button
         self.close_button = QPushButton('X', self.widget)
         self.close_button.setFixedSize(30, 30)
         self.close_button.clicked.connect(self.quit)
-        self.close_button.setStyleSheet('font-size: 20pt;'
+        self.close_button.setStyleSheet('font-size: 24pt;'
                                         'background-color: none;'
                                         'color: white;'
                                         'border-style: solid;'
                                         'border-radius: 5px;'
-                                        'border-width: 2px;'
+                                        'border-width: 1px;'
                                         'border-color: white;')
 
         # Labels
         self.l_time = QLabel()
         self.l_total = QLabel('Total')
-        self.l_total.setStyleSheet('QLabel{font-size: 20pt; padding-top: 1em;}')
+        self.l_total.setStyleSheet('QLabel{font-size: '+str(settings.title_font_size)+'pt; padding-top: 1em;}')
         self.l_speed = QLabel()
         self.l_avg_speed = QLabel()
         self.l_max_speed = QLabel()
         self.l_horizontal = QLabel('Horizontal')
-        self.l_horizontal.setStyleSheet('QLabel{font-size: 20pt; padding-top: 1em}')
+        self.l_horizontal.setStyleSheet('QLabel{font-size: '+str(settings.title_font_size)+'pt; padding-top: 1em}')
         self.l_speed_h = QLabel()
         self.l_avg_speed_h = QLabel()
         self.l_max_speed_h = QLabel()
         self.l_vertical = QLabel('Vertical')
-        self.l_vertical.setStyleSheet('QLabel{font-size: 20pt; padding-top: 1em}')
+        self.l_vertical.setStyleSheet('QLabel{font-size: '+str(settings.title_font_size)+'pt; padding-top: 1em}')
         self.l_speed_v = QLabel()
         self.l_avg_speed_v = QLabel()
         self.l_max_speed_v = QLabel()
