@@ -441,9 +441,15 @@ class SpeedometerRunnable(QRunnable):
         self.map_circle = map_circle
         self.scaling = scaling
         self.running = True
+        self.finished = False
 
     def stop(self):
         self.running = False
+
+    def wait(self):
+        t = time.time()
+        while not self.finished and (time.time() - t < 1):
+            time.sleep(0.1)
 
     def run(self):
         last_coord = None
@@ -491,6 +497,8 @@ class SpeedometerRunnable(QRunnable):
 
                 # # Uncoment this line to print the overlay refresh rate
                 # print('FPS:', 1/(time.time()-t_start))
+            
+        self.finished = True
 
 
 
@@ -525,6 +533,7 @@ def main():
         mainwindow = SpeedometerOverlay(screen, monitor_region['left'], monitor_region['top'], monitor_region['width'])
         mainwindow.show()
         runnable = SpeedometerRunnable(mainwindow, monitor_region, map_circle, scaling)
+        mainwindow.set_runnable(runnable)
         QThreadPool.globalInstance().start(runnable)
         sys.exit(app.exec())
 

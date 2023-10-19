@@ -2,8 +2,8 @@
 import datetime
 
 from PyQt6.QtCore import QPoint, QRect, Qt
-from PyQt6.QtGui import QColor, QPainter, QPen, QScreen
-from PyQt6.QtWidgets import QLabel, QMainWindow, QVBoxLayout, QWidget
+from PyQt6.QtGui import QColor, QPainter, QPen
+from PyQt6.QtWidgets import QLabel, QMainWindow, QVBoxLayout, QWidget, QPushButton
 
 import settings
 
@@ -26,12 +26,25 @@ class SpeedometerOverlay(QMainWindow):
         self.layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
         self.setStyleSheet("QLabel{font-size: 16pt;}")
 
+        # Close button
+        self.close_button = QPushButton('X', self.widget)
+        self.close_button.clicked.connect(self.quit)
+        self.close_button.setStyleSheet('font-size: 20pt;'
+                                        'background-color: none;'
+                                        'color: white;'
+                                        'border-style: solid;'
+                                        'border-radius: 5px;'
+                                        'border-width: 2px;'
+                                        'border-color: white;')
+
         if settings.overlay_width is not None:
             self.setGeometry(QRect(0, 0, settings.overlay_width, self.frameGeometry().height()))
             self.layout.setContentsMargins(int((settings.overlay_width-100)/2),20,20,20)
+            self.close_button.setGeometry(settings.overlay_width - 30, 0, 30, 30)
         else:
             self.setGeometry(QRect(0, 0, map_width, self.frameGeometry().height()))
             self.layout.setContentsMargins(int((map_width-100)/2),20,20,20)
+            self.close_button.setGeometry(map_width - 30, 0, 30, 30)
 
         self.l_time = QLabel()
         self.l_total = QLabel('Total')
@@ -126,3 +139,13 @@ class SpeedometerOverlay(QMainWindow):
         self.move(self.pos() + event.globalPosition().toPoint() - self.dragPos )
         self.dragPos = event.globalPosition().toPoint()
         event.accept()
+
+
+    def set_runnable(self, runnable):
+        self.runnable = runnable
+
+
+    def quit(self):
+        self.runnable.stop()
+        self.runnable.wait()
+        self.close()
