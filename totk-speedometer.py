@@ -189,8 +189,8 @@ def process_coordinates(coord, last_coord, time_delta):
 
 
 def print_stats(coord, last_coord, stats):
-    print(f'Coord: {[f"{c:5}" for c in coord]}'
-    f' - Last Coord {[f"{c:5}" for c in last_coord]}'
+    print(f'Coord: {[f"{c: 05d}" for c in coord]}'
+    f' - Last Coord {[f"{c: 05d}" for c in last_coord]}'
     f' - Distance: {stats["distance"]["Distance"]:8.2f} m'
     f' - Speed: {stats["total"]["Speed"]*settings.units[0]:9.2f} {settings.units[1]}'
     f' - AvgSpeed: {stats["total"]["Avg"]*settings.units[0]:5.2f} {settings.units[1]}'
@@ -200,7 +200,7 @@ def print_stats(coord, last_coord, stats):
     if not any(np.isnan(b) or b > settings.max_speed for v in stats.values() for b in v.values()):
         print()
     else:
-        print(' - Bad Coordinates - max speed exceeded!')
+        print(' - Invalid Coordinates!')
 
 
 
@@ -320,7 +320,7 @@ def export_video_with_overlay(video_path):
                 last_coord = coord
                 count = 0
             else:
-                print('Invalid coordinates!', coord)
+                print('Failed reading coordinates! Coord:', coord)
 
         count = count + 1
 
@@ -507,7 +507,7 @@ class SpeedometerRunnable(QRunnable):
                     last_coord_time = t
                     last_coord = coord
                 else:
-                    print('Invalid coordinates!', coord)
+                    print('Failed reading coordinates! Coord:', coord)
 
                 if 'speed_stats' in locals():
                     self.mainwindow.update_labels(speed_stats, text_color)
