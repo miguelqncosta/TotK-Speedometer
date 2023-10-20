@@ -66,9 +66,13 @@ def preprocess_coord_img(coord_img):
 
 
 def extract_coordinates(coord_img):
-    text = pytesseract.image_to_string(coord_img, config='--psm 7 --oem 3 -c tessedit_char_whitelist=" -0123456789"')
+    text = pytesseract.image_to_string(coord_img, config='--psm 7 --oem 3 --user-patterns coord.patterns -c tessedit_char_whitelist=" -0123456789"')
     coord_list = text.strip().replace('--', '-').split(' ')
 
+    if '' in coord_list:
+        coord_list.remove('')
+    if ' ' in coord_list:
+        coord_list.remove(' ')
     if '-' in coord_list:
         coord_list.remove('-')
 
