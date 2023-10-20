@@ -130,6 +130,23 @@ python3 totk-speedometer.py -s -m <monitor-number>
 
 
 
+## Updating
+Get notified of new releases by enabling watch for the repository releases. You need to be logged in with a GitHub account for the watch button to be visible.
+
+Click the `Watch` button -> select `Custom` -> check the `Releases` option and click `Apply`. 
+<p align="center">
+  <img src="images/readme/watch-button.png" height="400px"/>
+  <img src="images/readme/arrow-right.png" height="400px"/>
+  <img src="images/readme/watch-custom-releases.png" height="400px" /> 
+</p>
+
+
+To update download the zip of the latest [release](https://github.com/miguelqncosta/TotK-Speedometer/releases) and unzip it.
+
+It's best to delete the older version folder instead of replacing the files on it.
+
+
+
 ## Known issues:
 - The map underneath the coordinates can obfuscate them and make it very hard to read. This sometimes results in wrong coordinates or not being able to read the coordinates at all.
 - Running from screen capture can have a hard time detecting the map position. If it doesn't work you can use the `images/detected_circles.png` and `images/detected_map_circles.png` to try to understand whats happening. Using a maximized window or a solid color background usually helps.
