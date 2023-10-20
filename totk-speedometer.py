@@ -380,7 +380,21 @@ def detect_map(monitor_number):
                 'height': mon['height'],
                 'mon': monitor_number
             }
+        
+        sct_img = sct.grab(monitor)
+        img = np.array(sct_img)
+        h, w, c = img.shape
+        monitor_scaling = int(w/mon['width'])
+        
+        print('Using Monitor', monitor_number, '- Geometry:', 
+                ' width:', mon['width'],
+                ' height:', mon['height'],
+                ' top:', mon['top'],
+                ' left:', mon['left'],
+                ' scaling:', monitor_scaling
+            )
 
+        print()
         print('Searching map position...')
 
         while True:
@@ -390,12 +404,6 @@ def detect_map(monitor_number):
             img = np.array(sct_img)
             cv2.imwrite('images/screenshot.png', img)
 
-            h, w, c = img.shape
-            if mon['width']*2 == w:
-                scaling = 2
-            else:
-                scaling = 1
-
             circles, circles_img = detect_circle(img, h)
             if circles_img is not None:
                 cv2.imwrite('images/detected_circles.png', circles_img)
@@ -404,10 +412,10 @@ def detect_map(monitor_number):
                 for map_circle in circles[0]:
                     # Capture only the screen part the map occupies
                     monitor_region = {
-                        'top': int(mon['top']+(map_circle[1]-map_circle[2])/scaling - 20),
-                        'left': int(mon['left']+(map_circle[0]-map_circle[2])/scaling - 20),
-                        'width': int(((map_circle[2]*2)/scaling) + 40),
-                        'height': int(((map_circle[2]*2)/scaling) + 40),
+                        'top': int(mon['top']+(map_circle[1]-map_circle[2])/monitor_scaling - 20),
+                        'left': int(mon['left']+(map_circle[0]-map_circle[2])/monitor_scaling - 20),
+                        'width': int(((map_circle[2]*2)/monitor_scaling) + 40),
+                        'height': int(((map_circle[2]*2)/monitor_scaling) + 40),
                         'mon': monitor_number
                     }
 
@@ -422,14 +430,23 @@ def detect_map(monitor_number):
                     if circles is not None:
                         if len(circles[0])==1:
                             map_circle = circles[0][0]
-                            coord_img = get_coord_img(map_img, map_circle, int(8/scaling))
+                            coord_img = get_coord_img(map_img, map_circle, int(8/monitor_scaling))
                             processed_img = preprocess_coord_img(coord_img)
                             ret, coord = extract_coordinates(processed_img)
                             if ret:
                                 tmp_speed_stats = process_coordinates(coord, coord, 1)
                                 if tmp_speed_stats is not None:
                                     print('Map position detected.')
-                                    return map_circle, monitor_region, scaling
+                                    print()
+                                    print('Map region', 
+                                            ' width:', monitor_region['width'],
+                                            ' height:', monitor_region['height'],
+                                            ' top:', monitor_region['top'],
+                                            ' left:', monitor_region['left']
+                                        )
+                                    print('Map center: [', map_circle[0], ',', map_circle[1], ']  Map radius:', map_circle[2])
+                                    print()
+                                    return map_circle, monitor_region, monitor_scaling
                                 
             sleep_time = (1/settings.refresh_rate)-(time.time()-t_start)
             if sleep_time > 0:
@@ -438,12 +455,12 @@ def detect_map(monitor_number):
 
 
 class SpeedometerRunnable(QRunnable):
-    def __init__(self, mainwindow, monitor_sct, map_circle, scaling):
+    def __init__(self, mainwindow, monitor_region, monitor_scaling, map_circle):
         super().__init__()
         self.mainwindow = mainwindow
-        self.monitor_sct = monitor_sct
+        self.monitor_region = monitor_region
+        self.monitor_scaling = monitor_scaling
         self.map_circle = map_circle
-        self.scaling = scaling
         self.running = True
         self.finished = False
 
@@ -464,14 +481,14 @@ class SpeedometerRunnable(QRunnable):
                 t_start = time.time()
 
                 # Grab the map screenshot
-                sct_img = sct.grab(self.monitor_sct)
+                sct_img = sct.grab(self.monitor_region)
 
                 # Save the map screenshot
                 if settings.save_preprocessing_images:
                     mss.tools.to_png(sct_img.rgb, sct_img.size, output='images/map.png')
 
                 map_img = np.array(sct_img)
-                scaling = int(8/self.scaling)
+                scaling = int(8/self.monitor_scaling)
                 coord_img = get_coord_img(map_img, self.map_circle, scaling)
                 processed_img = preprocess_coord_img(coord_img)
                 ret, coord = extract_coordinates(processed_img)
@@ -527,18 +544,22 @@ def main():
         parser.print_help()
         exit()
 
+    print()
+    print('---------- TotK Speedometer ----------')
+    print()
+
     if args.files is not None:
         for f in args.files:
             if os.path.isfile(f): 
                 export_video_with_overlay(f)
 
     elif args.screen_capture:
-        map_circle, monitor_region, scaling = detect_map(args.monitor)
+        map_circle, monitor_region, monitor_scaling = detect_map(args.monitor)
         app = QtWidgets.QApplication(sys.argv)
         screen = app.screens()[args.monitor-1]
         mainwindow = SpeedometerOverlay(screen, monitor_region['left'], monitor_region['top'], monitor_region['width'])
         mainwindow.show()
-        runnable = SpeedometerRunnable(mainwindow, monitor_region, map_circle, scaling)
+        runnable = SpeedometerRunnable(mainwindow, monitor_region, monitor_scaling, map_circle)
         mainwindow.set_runnable(runnable)
         QThreadPool.globalInstance().start(runnable)
         sys.exit(app.exec())
