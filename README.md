@@ -105,7 +105,7 @@ python3 totk-speedometer.py -f '/Users/miguelcosta/Downloads/totk-videos/2023100
 
 Output files are saved to `<path-to-totk-video>/totk-speedometer-videos/`
 
-#### Accepts multiple video files as input:
+##### Accepts multiple video files as input:
 ```
 python3 totk-speedometer.py -f <path-to-totk-video-1>  <path-to-totk-video-2> ...
 ```
@@ -148,8 +148,8 @@ It's best to delete the older version folder instead of replacing the files on i
 
 
 ## Known issues:
-- The map underneath the coordinates can obfuscate them and make it very hard to read. This sometimes results in wrong coordinates or not being able to read the coordinates at all.
-- Running from screen capture can have a hard time detecting the map position. If it doesn't work you can use the `images/detected_circles.png` and `images/detected_map_circles.png` to try to understand whats happening. Using a maximized window or a solid color background usually helps.
+- The map underneath the coordinates can obfuscate them and make it very hard to read. This sometimes results in wrong coordinates or not being able to read the coordinates at all. Setting the mini-map to the sky (open map, switch to sky view and close it) usually leads to better results. Roads, shrines, map pins, etc under the map coordinates will make it much harder to read the coordinates and lead to incorrect results.
+- Running from screen capture can have a hard time detecting the map position. If it doesn't work you can use the `images/detected_circles.png` and `images/detected_map_circle.png` to try to understand whats happening. Using a maximized window or a solid color background usually helps. For the map detection to work the coordinates must be readable so changing the mini-map to the sky view can also make the map detection faster. 
 
 
 ## Roadmap

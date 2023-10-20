@@ -425,7 +425,7 @@ def detect_map(monitor_number):
 
                     circles, circles_img = detect_circle(map_img, h)
                     if circles_img is not None:
-                        cv2.imwrite('images/detected_map_circles.png', circles_img)
+                        cv2.imwrite('images/detected_map_circle.png', circles_img)
 
                     if circles is not None:
                         if len(circles[0])==1:
