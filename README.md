@@ -113,7 +113,7 @@ python3 totk-speedometer.py -f <path-to-totk-video-1>  <path-to-totk-video-2> ..
 ### Running from screen capture
 Running from screen capture will be more imprecise since it uses real time to calculate speed instead of the video FPS as a time base.
 
-The overlay will be automatically positioned above the map and can be dragged and repositioned. The overlay width is adjusted automatically to the map width but if you prefer to use a fixed width it can be defined in the [settings.py](settings.py) file.
+The overlay will be automatically positioned above the map and can be dragged and repositioned. You can also find in the [settings.py](settings.py) file configurations to offset the overlay to a different position and configure the font size and colors.
 
 The map position is only detected when the speedometer starts. If the game window is moved or resized the speedometer must be closed and reopened.
 

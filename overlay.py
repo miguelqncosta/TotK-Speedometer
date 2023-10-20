@@ -15,6 +15,7 @@ class SpeedometerOverlay(QMainWindow):
         self.map_left = map_left
         self.map_top = map_top
         self.map_width = map_width
+        self.was_dragged = False
 
         self.setWindowFlags(
             Qt.WindowType.WindowStaysOnTopHint |
@@ -77,18 +78,9 @@ class SpeedometerOverlay(QMainWindow):
         self.widget.setLayout(self.layout)
         self.setCentralWidget(self.widget)
 
+        self.close_button.setGeometry(self.widget.width() - 30, 0, 30, 30)
         self.layout.setContentsMargins(40,40,40,40)
-
-        if settings.overlay_width is not None:
-            self.setGeometry(QRect(0, 0, settings.overlay_width, self.frameGeometry().height()))
-            self.close_button.setGeometry(settings.overlay_width - 30, 0, 30, 30)
-            self.layout.setContentsMargins((settings.overlay_width-100)/2, 40, 40, 40)
-        else:
-            self.setGeometry(QRect(0, 0, (self.map_width/1.5), self.frameGeometry().height()))
-            self.close_button.setGeometry((self.map_width/1.5) - 30, 0, 30, 30)
-            self.layout.setContentsMargins(((self.map_width/1.5)-100)/2, 40, 40, 40)
-        
-        self.move_to_map()
+        self.reposition()
 
 
     def update_labels(self, stats, color):
@@ -128,7 +120,8 @@ class SpeedometerOverlay(QMainWindow):
     def resizeEvent(self, event):
         super().resizeEvent(event)
         self.close_button.setGeometry(self.widget.width() - 30, 0, 30, 30)
-        self.move_to_map()
+        if not self.was_dragged:
+            self.reposition()
 
 
     def center(self):
@@ -137,12 +130,14 @@ class SpeedometerOverlay(QMainWindow):
         self.move(geo.topLeft())
 
 
-    def move_to_map(self):
+    def reposition(self):
         geo = self.frameGeometry()
         geo.moveCenter(self.screen.geometry().center())
         height = self.frameGeometry().height()
         width = self.frameGeometry().width()
-        pos = QPoint(self.map_left + settings.horizontal_offset, self.map_top - settings.vertical_offset) + QPoint(self.map_width/2 - width/2, - height)
+        offset =  QPoint(settings.horizontal_offset, - settings.vertical_offset)
+        map_pos =  QPoint(self.map_left, self.map_top)
+        pos = map_pos + offset + QPoint(self.map_width/2 - width/2, - height)
         self.move(pos)
 
             
@@ -153,6 +148,7 @@ class SpeedometerOverlay(QMainWindow):
     def mouseMoveEvent(self, event):
         self.move(self.pos() + event.globalPosition().toPoint() - self.dragPos )
         self.dragPos = event.globalPosition().toPoint()
+        self.was_dragged = True
         event.accept()
 
 

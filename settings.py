@@ -53,16 +53,12 @@ show_preview = False
 ## Maximum refresh rate (times per second)
 refresh_rate = 3
 
-## Width for the real-time mode overlay
-## If set to None it will be automatically adjusted to the map width
-overlay_width = None
-
 ## Fixed offsets for overlay position
 ## The default overlay position is centered above the map.
 ## If you prefer to have the overlay in a different position change these offsets.
-## A positive value moves the overlay to the right and a negative value moves the overlay to the left.
+## Horizontal Offset: a positive value moves the overlay to the right and a negative value moves the overlay to the left.
 horizontal_offset = 0
-## A positive value moves the overlay up and a negative value moves the overlay down.
+## Vertical Offset: a positive value moves the overlay up and a negative value moves the overlay down.
 vertical_offset = 0
 
 ## Font sizes 
