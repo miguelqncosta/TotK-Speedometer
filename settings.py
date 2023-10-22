@@ -39,6 +39,16 @@ text_color_ok = (255, 255, 255)
 text_color_fail = (200, 200, 200)
 
 
+## Name of the directory where the CSV files will be saved.
+csv_directory = 'totk-speedometer-CSV'
+
+## Column names for the CSV file. You can change the names if desired but DO NOT change the order of the columns.
+column_names = ['Coordinates', 'Last Coordinates', 'Time',
+                'Distance', 'Horizontal Distance', 'Vertical Distance',
+                'Speed', 'Average Speed', 'Maximum Speed',
+                'Horizontal Speed', 'Horizontal Average Speed', 'Horizontal Maximum Speed',
+                'Vertical Speed', 'Vertical Average Speed', 'Vertical Maximum Speed']
+
 
 
 ##### VIDEO MODE SETTINGS #####

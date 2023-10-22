@@ -4,6 +4,7 @@ import os
 import signal
 import sys
 import time
+from csv import writer
 
 import cv2
 import mss.tools
@@ -205,6 +206,15 @@ def print_stats(coord, last_coord, stats):
 
 
 
+def write_csv_line(csv_writer, coord, last_coord, time_delta, stats):
+    line = [coord, last_coord, time_delta]
+    for d in stats.values():
+        line = line + [value for value in d.values()]
+
+    csv_writer.writerow(list(line))
+
+
+
 def add_overlay(frame, speed_stats, width, height, text_color):
     text_w_start = int(width*0.842)
     text_h_start = int(height*0.20)
@@ -271,8 +281,9 @@ def export_video(video_path, fps):
 
 
 
-def export_video_with_overlay(video_path):
+def export_video_with_overlay(video_path, write_csv=False):
     print('Processing video: ' + video_path)
+    print()
 
     video = cv2.VideoCapture(video_path)
     width  = int(video.get(cv2.CAP_PROP_FRAME_WIDTH))
@@ -282,6 +293,7 @@ def export_video_with_overlay(video_path):
     codec = chr(h&0xff) + chr((h>>8)&0xff) + chr((h>>16)&0xff) + chr((h>>24)&0xff)
 
     print(f'Video - Width: {width}, Height: {height}, FPS: {fps}, Encoding: {codec}')
+    print()
 
     path = os.path.dirname(video_path)
     filename = os.path.basename(video_path)
@@ -290,6 +302,15 @@ def export_video_with_overlay(video_path):
     os.makedirs(os.path.join(path, settings.output_directory), exist_ok=True)
     tmp_filename = os.path.join(path, settings.output_directory, name+'_speedometer_tmp'+ext)
     tmp_video = cv2.VideoWriter(tmp_filename, cv2.VideoWriter_fourcc(*'avc1'), fps, (width, height))
+
+    if write_csv:
+        os.makedirs(os.path.join(path, settings.csv_directory), exist_ok=True)
+        csv_filename = os.path.join(path, settings.csv_directory, name+'_speedometer.csv')
+        csv_file = open(csv_filename, 'w')
+        csv_writer = writer(csv_file)
+        csv_writer.writerow(settings.column_names)
+        print('Writing speedometer stats to:', csv_filename)
+        print()
 
     count = 0
     map_circle = None
@@ -306,7 +327,7 @@ def export_video_with_overlay(video_path):
         if settings.save_preprocessing_images:
             cv2.imwrite('images/map.png', map_img)
 
-        if count > settings.calc_every_x_frames:
+        if count >= settings.calc_every_x_frames:
             coord_img = get_coord_img(map_img, map_circle, 16)
             processed_img = preprocess_coord_img(coord_img)
             ret, coord = extract_coordinates(processed_img)
@@ -314,8 +335,11 @@ def export_video_with_overlay(video_path):
 
             if ret:
                 if last_coord is not None:
-                    tmp_speed_stats = process_coordinates(coord, last_coord, (1/fps)*count)
+                    time_delta = (1/fps)*count
+                    tmp_speed_stats = process_coordinates(coord, last_coord, time_delta)
                     print_stats(coord, last_coord, tmp_speed_stats)
+                    if write_csv:
+                        write_csv_line(csv_writer, coord, last_coord, time_delta, tmp_speed_stats)
 
                     if not any(np.isnan(b) or b > settings.max_speed for v in tmp_speed_stats.values() for b in v.values()):
                         speed_stats = tmp_speed_stats
@@ -338,6 +362,9 @@ def export_video_with_overlay(video_path):
             # Press 'q' key to quit
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 return
+
+    if write_csv:
+        csv_file.close()
 
     video.release()
     tmp_video.release()
@@ -464,12 +491,13 @@ def detect_map(monitor_number):
 
 
 class SpeedometerRunnable(QRunnable):
-    def __init__(self, mainwindow, monitor_region, monitor_scaling, map_circle):
+    def __init__(self, mainwindow, monitor_region, monitor_scaling, map_circle, write_csv=False):
         super().__init__()
         self.mainwindow = mainwindow
         self.monitor_region = monitor_region
         self.monitor_scaling = monitor_scaling
         self.map_circle = map_circle
+        self.write_csv = write_csv
         self.running = True
         self.finished = False
 
@@ -485,6 +513,16 @@ class SpeedometerRunnable(QRunnable):
         last_coord = None
         last_coord_time = None
         speed_stats = None
+
+        if self.write_csv:
+            os.makedirs(settings.csv_directory, exist_ok=True)
+            time_str = time.strftime('%Y%m%d-%H%M%S')
+            csv_filename = os.path.join(settings.csv_directory, time_str + '_speedometer.csv')
+            csv_file = open(csv_filename, 'w')
+            csv_writer = writer(csv_file)
+            csv_writer.writerow(settings.column_names)
+            print('Writing speedometer stats to:', csv_filename)
+            print()
 
         with mss.mss() as sct:
             while self.running:
@@ -507,8 +545,12 @@ class SpeedometerRunnable(QRunnable):
                 if ret:
                     t = time.time()
                     if last_coord is not None:
-                        tmp_speed_stats = process_coordinates(coord, last_coord, t-last_coord_time)
+                        time_delta = t-last_coord_time
+                        tmp_speed_stats = process_coordinates(coord, last_coord, time_delta)
                         print_stats(coord, last_coord, tmp_speed_stats)
+
+                        if self.write_csv:
+                            write_csv_line(csv_writer, coord, last_coord, time_delta, tmp_speed_stats)
 
                         if not any(np.isnan(b) or b > settings.max_speed for v in tmp_speed_stats.values() for b in v.values()):
                             speed_stats = tmp_speed_stats
@@ -528,6 +570,9 @@ class SpeedometerRunnable(QRunnable):
                 # # Uncomment this line to print the overlay refresh rate
                 # print('FPS:', 1/(time.time()-t_start))
 
+        if self.write_csv:
+            csv_file.close()
+
         self.finished = True
 
 
@@ -536,6 +581,7 @@ def main():
     import argparse
 
     parser = argparse.ArgumentParser(description='Speedometer for Zelda TotK')
+
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument('-f', dest='files', metavar='file', type=str, nargs='+', help='path to video file. Accepts multiple files')
     group.add_argument('-s', dest='screen_capture', action='store_true', help='use screen capture and overlay stats')
@@ -544,6 +590,8 @@ def main():
     group_optional = parser.add_mutually_exclusive_group(required=False)
     group_optional.add_argument('-m', '--monitor', dest='monitor', default=1, type=int, help='monitor number to capture and display the overlay')
     group_optional.add_argument('-c', '--cached-map-position', dest='cache', action='store_true', help='use the cached map position instead of searching')
+
+    parser.add_argument('--csv', dest='csv', action='store_true', help='save stats to CSV file')
 
     args = parser.parse_args()
 
@@ -560,7 +608,7 @@ def main():
     if args.files is not None:
         for f in args.files:
             if os.path.isfile(f):
-                export_video_with_overlay(f)
+                export_video_with_overlay(f, args.csv)
 
     elif args.screen_capture:
         if args.cache and os.path.isfile(settings.map_position_cache_filename):
@@ -583,7 +631,7 @@ def main():
         app = QtWidgets.QApplication(sys.argv)
         mainwindow = SpeedometerOverlay(monitor_region['left'], monitor_region['top'], monitor_region['width'])
         mainwindow.show()
-        runnable = SpeedometerRunnable(mainwindow, monitor_region, monitor_scaling, map_circle)
+        runnable = SpeedometerRunnable(mainwindow, monitor_region, monitor_scaling, map_circle, args.csv)
         mainwindow.set_runnable(runnable)
         QThreadPool.globalInstance().start(runnable)
         sys.exit(app.exec())

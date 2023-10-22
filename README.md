@@ -132,6 +132,26 @@ python3 totk-speedometer.py -s -c
 The last detected map position is saved to a file and can be used to skip the detection step for a faster startup with the `-c` argument. The monitor that was used is also saved so when using this options the `-m` argument cannot be used.
 
 
+### Saving stats to CSV file
+Both speedometer modes allow saving the coordinates and all calculated values to CSV files with the `--csv` argument.
+
+#### Video mode
+```
+python3 totk-speedometer.py --csv -f <path-to-totk-video>
+```
+Output files are saved to `<path-to-totk-video>/totk-speedometer-CSV`
+
+#### Real-time mode
+```
+python3 totk-speedometer.py -s --csv
+```
+Output files are saved to the directory `totk-speedometer-CSV` with a timestamped name.
+
+Example:
+```
+totk-speedometer-CSV/20231022-203951_speedometer.csv
+```
+
 
 
 ## Updating
