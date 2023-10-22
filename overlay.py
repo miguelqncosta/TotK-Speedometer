@@ -1,7 +1,7 @@
 
 import datetime
 
-from PyQt6.QtCore import QPoint, QRect, Qt
+from PyQt6.QtCore import QPoint, Qt
 from PyQt6.QtGui import QColor, QPainter, QPen
 from PyQt6.QtWidgets import QLabel, QMainWindow, QPushButton, QVBoxLayout, QWidget
 
@@ -26,40 +26,39 @@ class SpeedometerOverlay(QMainWindow):
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
 
         self.widget = QWidget()
-        self.widget.setStyleSheet('color: rgb'+str(settings.title_color)+';')
         self.layout = QVBoxLayout()
         self.layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
-        self.setStyleSheet('QLabel{font-size: '+str(settings.text_font_size)+'pt;}')
+        self.layout.setContentsMargins(40,40,40,40)
 
         # Close button
         self.close_button = QPushButton('X', self.widget)
         self.close_button.setFixedSize(30, 30)
         self.close_button.clicked.connect(self.quit)
-        self.close_button.setStyleSheet('font-size: 24pt;'
-                                        'background-color: none;'
-                                        'color: white;'
-                                        'border-style: solid;'
-                                        'border-radius: 5px;'
-                                        'border-width: 1px;'
-                                        'border-color: white;')
+        self.close_button.setStyleSheet(settings.close_button_style)
+        self.close_button.setGeometry(self.widget.width() - 30, 0, 30, 30)
 
         # Labels
-        self.l_time = QLabel()
+        current_time = str(datetime.datetime.now().strftime('%H:%M:%S'))
+        self.l_time = QLabel('Time: '+current_time)
         self.l_total = QLabel('Total')
-        self.l_total.setStyleSheet('QLabel{font-size: '+str(settings.title_font_size)+'pt; padding-top: 1em;}')
-        self.l_speed = QLabel()
-        self.l_avg_speed = QLabel()
-        self.l_max_speed = QLabel()
+        self.l_speed = QLabel(f'Speed: {0.0:0.2f} {settings.units[1]}')
+        self.l_avg_speed = QLabel(f'Avg: {0.0:0.2f} {settings.units[1]}')
+        self.l_max_speed = QLabel(f'Max: {0.0:0.2f} {settings.units[1]}')
         self.l_horizontal = QLabel('Horizontal')
-        self.l_horizontal.setStyleSheet('QLabel{font-size: '+str(settings.title_font_size)+'pt; padding-top: 1em}')
-        self.l_speed_h = QLabel()
-        self.l_avg_speed_h = QLabel()
-        self.l_max_speed_h = QLabel()
+        self.l_speed_h = QLabel(f'Speed: {0.0:0.2f} {settings.units[1]}')
+        self.l_avg_speed_h = QLabel(f'Avg: {0.0:0.2f} {settings.units[1]}')
+        self.l_max_speed_h = QLabel(f'Max: {0.0:0.2f} {settings.units[1]}')
         self.l_vertical = QLabel('Vertical')
-        self.l_vertical.setStyleSheet('QLabel{font-size: '+str(settings.title_font_size)+'pt; padding-top: 1em}')
-        self.l_speed_v = QLabel()
-        self.l_avg_speed_v = QLabel()
-        self.l_max_speed_v = QLabel()
+        self.l_speed_v = QLabel(f'Speed: {0.0:0.2f} {settings.units[1]}')
+        self.l_avg_speed_v = QLabel(f'Avg: {0.0:0.2f} {settings.units[1]}')
+        self.l_max_speed_v = QLabel(f'Max: {0.0:0.2f} {settings.units[1]}')
+
+        # Stylesheets
+        self.l_time.setStyleSheet(settings.text_style_ok)
+        self.l_total.setStyleSheet(settings.title_style)
+        self.l_horizontal.setStyleSheet(settings.title_style)
+        self.l_vertical.setStyleSheet(settings.title_style)
+        self.widget.setStyleSheet(settings.text_style_ok)
 
         self.layout.addWidget(self.l_time)
         self.layout.addWidget(self.l_total)
@@ -77,25 +76,13 @@ class SpeedometerOverlay(QMainWindow):
 
         self.widget.setLayout(self.layout)
         self.setCentralWidget(self.widget)
-
-        self.close_button.setGeometry(self.widget.width() - 30, 0, 30, 30)
-        self.layout.setContentsMargins(40,40,40,40)
         self.reposition()
 
 
-    def update_labels(self, stats, color):
+    def update_labels(self, stats, text_style):
+        self.widget.setStyleSheet(text_style)
         current_time = str(datetime.datetime.now().strftime('%H:%M:%S'))
         self.l_time.setText('Time: '+current_time)
-
-        self.l_speed.setStyleSheet('color: rgb'+str(color)+';')
-        self.l_avg_speed.setStyleSheet('color: rgb'+str(color)+';')
-        self.l_max_speed.setStyleSheet('color: rgb'+str(color)+';')
-        self.l_speed_h.setStyleSheet('color: rgb'+str(color)+';')
-        self.l_avg_speed_h.setStyleSheet('color: rgb'+str(color)+';')
-        self.l_max_speed_h.setStyleSheet('color: rgb'+str(color)+';')
-        self.l_speed_v.setStyleSheet('color: rgb'+str(color)+';')
-        self.l_avg_speed_v.setStyleSheet('color: rgb'+str(color)+';')
-        self.l_max_speed_v.setStyleSheet('color: rgb'+str(color)+';')
 
         if stats is not None:
             self.l_speed.setText(f'Speed: {stats["total"]["Speed"]*settings.units[0]:0.2f} {settings.units[1]}')
@@ -111,9 +98,9 @@ class SpeedometerOverlay(QMainWindow):
 
     def paintEvent(self, event=None):
         painter = QPainter(self)
-        painter.setOpacity(0.2)
-        painter.setBrush(QColor(0,0,0))
-        painter.setPen(QPen(QColor(0,0,0)))
+        painter.setOpacity(settings.overlay_opacity)
+        painter.setBrush(QColor(*settings.overlay_color))
+        painter.setPen(QPen(QColor(*settings.overlay_color)))
         painter.drawRoundedRect(self.rect(), 10, 10)
 
 
@@ -140,7 +127,7 @@ class SpeedometerOverlay(QMainWindow):
         pos = map_pos + offset + QPoint(self.map_width/2 - width/2, - height)
         self.move(pos)
 
-            
+
     def mousePressEvent(self, event):
         self.dragPos = event.globalPosition().toPoint()
 

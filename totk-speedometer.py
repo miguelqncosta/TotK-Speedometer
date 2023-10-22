@@ -33,7 +33,7 @@ def get_coord_img(map_img, map_circle, scaling):
     polar_img = cv2.rotate(polar_img, cv2.ROTATE_90_CLOCKWISE)
     cropped_img = polar_img[int(polar_img.shape[0]*0.95):, int(polar_img.shape[1]*0.58):int(polar_img.shape[1]*0.92)]
 
-    if settings.save_preprocessing_images: 
+    if settings.save_preprocessing_images:
         cv2.imwrite('images/map_polar.png', polar_img)
         cv2.imwrite('images/map_cropped.png', cropped_img)
 
@@ -51,7 +51,7 @@ def preprocess_coord_img(coord_img):
     erode_img = cv2.erode(threshold_img, np.ones((3,3)), iterations=1)
     dilate_img = cv2.dilate(erode_img, np.ones((3,3)), iterations=2)
     processed_img = cv2.erode(dilate_img, np.ones((3,3)), iterations=2)
-    
+
     if settings.save_preprocessing_images:
         os.makedirs(os.path.join('images', 'preprocessing'), exist_ok=True)
         cv2.imwrite('images/preprocessing/1_blur_img.png', blur_img)
@@ -212,34 +212,37 @@ def add_overlay(frame, speed_stats, width, height, text_color):
     overlay_h_start = int(height*0.16)
     overlay_h_end = int(height*0.694)
     spacing = int(height/25)
-    text_size = height/1500
+    text_size = height/1500 * settings.text_scale
 
-    alpha = 0.25
+    bgr_text_color = text_color[::-1]
+    bgr_title_color = settings.title_color[::-1]
+    bgr_overlay_color = settings.overlay_color[::-1]
+
     overlay = frame.copy()
-    cv2.rectangle(overlay, (overlay_w_start, overlay_h_start), (overlay_w_end, overlay_h_end), (0,0,0), cv2.FILLED)
-    cv2.addWeighted(overlay, alpha, frame, 1 - alpha, 0, frame)
+    cv2.rectangle(overlay, (overlay_w_start, overlay_h_start), (overlay_w_end, overlay_h_end), bgr_overlay_color, cv2.FILLED)
+    cv2.addWeighted(overlay, settings.overlay_opacity, frame, 1 - settings.overlay_opacity, 0, frame)
 
     text_h = text_h_start
-    frame = cv2.putText(frame, 'Total', (text_w_start, text_h), cv2.FONT_HERSHEY_TRIPLEX, text_size, settings.title_color, 1, cv2.LINE_AA)
+    frame = cv2.putText(frame, 'Total', (text_w_start, text_h), cv2.FONT_HERSHEY_TRIPLEX, text_size, bgr_title_color, 1, cv2.LINE_AA)
     for key,value in speed_stats['total'].items():
         text_h = text_h + spacing
         text = f'{key}: {value*settings.units[0]:.2f} {settings.units[1]}'
-        frame = cv2.putText(frame, text, (text_w_start, text_h), cv2.FONT_HERSHEY_SIMPLEX, text_size, text_color, 1, cv2.LINE_AA)
+        frame = cv2.putText(frame, text, (text_w_start, text_h), cv2.FONT_HERSHEY_SIMPLEX, text_size, bgr_text_color, 1, cv2.LINE_AA)
 
     text_h = int(text_h + (1.5*spacing))
-    frame = cv2.putText(frame, 'Horizontal', (text_w_start, text_h), cv2.FONT_HERSHEY_TRIPLEX, text_size, settings.title_color, 1, cv2.LINE_AA)
+    frame = cv2.putText(frame, 'Horizontal', (text_w_start, text_h), cv2.FONT_HERSHEY_TRIPLEX, text_size, bgr_title_color, 1, cv2.LINE_AA)
     for key,value in speed_stats['horizontal'].items():
         text_h = text_h + spacing
         text = f'{key}: {value*settings.units[0]:.2f} {settings.units[1]}'
-        frame = cv2.putText(frame, text, (text_w_start, text_h), cv2.FONT_HERSHEY_SIMPLEX, text_size, text_color, 1, cv2.LINE_AA)
+        frame = cv2.putText(frame, text, (text_w_start, text_h), cv2.FONT_HERSHEY_SIMPLEX, text_size, bgr_text_color, 1, cv2.LINE_AA)
 
     text_h = int(text_h + (1.5*spacing))
-    frame = cv2.putText(frame, 'Vertical', (text_w_start, text_h), cv2.FONT_HERSHEY_TRIPLEX, text_size, settings.title_color, 1, cv2.LINE_AA)
+    frame = cv2.putText(frame, 'Vertical', (text_w_start, text_h), cv2.FONT_HERSHEY_TRIPLEX, text_size, bgr_title_color, 1, cv2.LINE_AA)
     for key,value in speed_stats['vertical'].items():
         text_h = text_h + spacing
         text = f'{key}: {value*settings.units[0]:.2f} {settings.units[1]}'
-        frame = cv2.putText(frame, text, (text_w_start, text_h), cv2.FONT_HERSHEY_SIMPLEX, text_size, text_color, 1, cv2.LINE_AA)
-    
+        frame = cv2.putText(frame, text, (text_w_start, text_h), cv2.FONT_HERSHEY_SIMPLEX, text_size, bgr_text_color, 1, cv2.LINE_AA)
+
     return frame
 
 
@@ -380,13 +383,13 @@ def detect_map(monitor_number):
                 'height': mon['height'],
                 'mon': monitor_number
             }
-        
+
         sct_img = sct.grab(monitor)
         img = np.array(sct_img)
         h, w, c = img.shape
         monitor_scaling = int(w/mon['width'])
-        
-        print('Using Monitor', monitor_number, '- Geometry:', 
+
+        print('Using Monitor', monitor_number, '- Geometry:',
                 ' width:', mon['width'],
                 ' height:', mon['height'],
                 ' top:', mon['top'],
@@ -438,7 +441,7 @@ def detect_map(monitor_number):
                                 if tmp_speed_stats is not None:
                                     print('Map position detected.')
                                     print()
-                                    print('Map region', 
+                                    print('Map region',
                                             ' width:', monitor_region['width'],
                                             ' height:', monitor_region['height'],
                                             ' top:', monitor_region['top'],
@@ -447,7 +450,7 @@ def detect_map(monitor_number):
                                     print('Map center: [', map_circle[0], ',', map_circle[1], ']  Map radius:', map_circle[2])
                                     print()
                                     return map_circle, monitor_region, monitor_scaling
-                                
+
             sleep_time = (1/settings.refresh_rate)-(time.time()-t_start)
             if sleep_time > 0:
                 time.sleep(sleep_time)
@@ -475,6 +478,7 @@ class SpeedometerRunnable(QRunnable):
     def run(self):
         last_coord = None
         last_coord_time = None
+        speed_stats = None
 
         with mss.mss() as sct:
             while self.running:
@@ -492,7 +496,7 @@ class SpeedometerRunnable(QRunnable):
                 coord_img = get_coord_img(map_img, self.map_circle, scaling)
                 processed_img = preprocess_coord_img(coord_img)
                 ret, coord = extract_coordinates(processed_img)
-                text_color = settings.text_color_fail # Set text color to gray when the coordinates are not valid
+                text_style = settings.text_style_fail # Set text color to gray when the coordinates are not valid
 
                 if ret:
                     t = time.time()
@@ -502,25 +506,22 @@ class SpeedometerRunnable(QRunnable):
 
                         if not any(np.isnan(b) or b > settings.max_speed for v in tmp_speed_stats.values() for b in v.values()):
                             speed_stats = tmp_speed_stats
-                            text_color = settings.text_color_ok # Set text to white when the coordinates are valid
+                            text_style = settings.text_style_ok # Set text to white when the coordinates are valid
 
                     last_coord_time = t
                     last_coord = coord
                 else:
                     print('Failed reading coordinates! Coord:', coord)
 
-                if 'speed_stats' in locals():
-                    self.mainwindow.update_labels(speed_stats, text_color)
-                else:
-                    self.mainwindow.update_labels(None, text_color)
-            
+                self.mainwindow.update_labels(speed_stats, text_style)
+
                 sleep_time = (1/settings.refresh_rate)-(time.time()-t_start)
                 if sleep_time > 0:
                     time.sleep(sleep_time)
 
                 # # Uncoment this line to print the overlay refresh rate
                 # print('FPS:', 1/(time.time()-t_start))
-            
+
         self.finished = True
 
 
@@ -550,7 +551,7 @@ def main():
 
     if args.files is not None:
         for f in args.files:
-            if os.path.isfile(f): 
+            if os.path.isfile(f):
                 export_video_with_overlay(f)
 
     elif args.screen_capture:

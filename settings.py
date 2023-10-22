@@ -5,12 +5,12 @@
 ## Use the last 10 speed values to calculate the average and maximum.
 avg_length = 10
 
+
 ### Units
-## Default unit is meters per second (m/s)
+## The default unit is meters per second (m/s)
 units = (1, 'm/s')
 
-## It is assumed that the map coordinates are in meters.
-## If you don't like this assumption and prefer to use units per second (u/s) uncomment the line bellow.
+## If prefer to use units per second (u/s) uncomment the line bellow.
 # units = (1, 'u/s')
 
 ## To use kilometers per hour (km/h) uncomment the line bellow.
@@ -19,14 +19,24 @@ units = (1, 'm/s')
 ## To use miles per hour (mph) uncomment the line bellow.
 # units = (2.2369363, 'mph')
 
+
 ## Maximum valid speed in meters per second (m/s)
 ## Speeds above this value are considered to be from bad coordinate readings and are invalidated
 max_speed = 100
 
-## Overlay text  colors
+
+### Colors (RGB)
+## Overlay background color
+overlay_color = (0, 0, 0)
+## Overlay background opacity (0.0 - 1.0)
+overlay_opacity = 0.2
+
+## Title color (Default: white)
 title_color = (255, 255, 255)
-text_color_ok = (255, 255, 255) # white text when the coordinates are OK
-text_color_fail = (200, 200, 200) # grayed out text when the coordinates are not valid
+## Text color when the coordinates are valid (Default: white)
+text_color_ok = (255, 255, 255)
+## Text color when the coordinates are not valid (Default: gray)
+text_color_fail = (200, 200, 200)
 
 
 
@@ -43,6 +53,13 @@ output_directory = 'totk-speedometer-videos'
 
 ## Show preview while creating the video
 show_preview = False
+
+## Text size scale
+## Default is 1.0 for m/s or u/s and 0.9 for km/h and mph
+if units[1] == 'km/h' or 'mph':
+    text_scale = 0.9
+else:
+    text_scale = 1.0
 
 
 
@@ -61,9 +78,32 @@ horizontal_offset = 0
 ## Vertical Offset: a positive value moves the overlay up and a negative value moves the overlay down.
 vertical_offset = 0
 
-## Font sizes 
-title_font_size = 24
-text_font_size = 20
+## Stylesheets
+title_style = (
+                'font-size: 30pt;'
+                'padding-top: 1em;'
+                'color: rgb'+str(title_color)+';'
+            )
+
+text_style_ok = (
+                'font-size: 24pt;'
+                'color: rgb'+str(text_color_ok)+';'
+            )
+
+text_style_fail = (
+                'font-size: 24pt;'
+                'color: rgb'+str(text_color_fail)+';'
+            )
+
+close_button_style = (
+                'font-size: 24pt;'
+                'color: white;'
+                'background-color: none;'
+                'border-style: solid;'
+                'border-radius: 5px;'
+                'border-width: 1px;'
+                'border-color: white;'
+            )
 
 
 
