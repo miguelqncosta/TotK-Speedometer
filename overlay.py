@@ -1,9 +1,14 @@
 
 import datetime
 
-from PyQt6.QtCore import QPoint, Qt
-from PyQt6.QtGui import QColor, QPainter, QPen
-from PyQt6.QtWidgets import QLabel, QMainWindow, QPushButton, QVBoxLayout, QWidget
+try:
+    from PyQt6.QtCore import QPoint, Qt
+    from PyQt6.QtGui import QColor, QPainter, QPen
+    from PyQt6.QtWidgets import QLabel, QMainWindow, QPushButton, QVBoxLayout, QWidget
+except ModuleNotFoundError:
+    from PyQt5.QtCore import QPoint, Qt
+    from PyQt5.QtGui import QColor, QPainter, QPen
+    from PyQt5.QtWidgets import QLabel, QMainWindow, QPushButton, QVBoxLayout, QWidget
 
 import settings
 
@@ -120,12 +125,19 @@ class SpeedometerOverlay(QMainWindow):
 
 
     def mousePressEvent(self, event):
-        self.dragPos = event.globalPosition().toPoint()
+        try:
+            self.dragPos = event.globalPosition().toPoint()
+        except AttributeError:
+            self.dragPos = event.globalPos()
 
 
     def mouseMoveEvent(self, event):
-        self.move(self.pos() + event.globalPosition().toPoint() - self.dragPos )
-        self.dragPos = event.globalPosition().toPoint()
+        try:
+            self.move(self.pos() + event.globalPosition().toPoint() - self.dragPos )
+            self.dragPos = event.globalPosition().toPoint()
+        except AttributeError:
+            self.move(self.pos() + event.globalPos() - self.dragPos )
+            self.dragPos = event.globalPos()
         self.was_dragged = True
         event.accept()
 

@@ -23,6 +23,7 @@ These values are configurable in [settings.py](settings.py)
 - python 3.9
 - tesseract 5.3.2
 - ffmpeg 6.0
+- PyQt6 or PyQt5
 
 Tested on macOS 13.5 with python 3.9
 
@@ -79,7 +80,11 @@ python3 -m pip install --upgrade pip
 python3 -m pip install -r requirements.txt
 ```
 
-
+If PyQt6 fails to install you can install PyQt5 instead:
+```
+cat requirements.txt | xargs -n 1 python3 -m pip install
+python3 -m pip install PyQt5
+```
 
 ## Configure
 See the file [settings.py](settings.py) to configure the TotK Speedometer.

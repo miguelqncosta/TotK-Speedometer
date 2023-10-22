@@ -11,8 +11,12 @@ import mss.tools
 import numpy as np
 import pytesseract
 from moviepy.editor import *
-from PyQt6 import QtWidgets
-from PyQt6.QtCore import QRunnable, QThreadPool
+try:
+    from PyQt6 import QtWidgets
+    from PyQt6.QtCore import QRunnable, QThreadPool
+except ModuleNotFoundError:
+    from PyQt5 import QtWidgets
+    from PyQt5.QtCore import QRunnable, QThreadPool
 
 import settings
 from overlay import SpeedometerOverlay
