@@ -9,9 +9,8 @@ import settings
 
 
 class SpeedometerOverlay(QMainWindow):
-    def __init__(self, screen, map_left, map_top, map_width):
+    def __init__(self, map_left, map_top, map_width):
         QMainWindow.__init__(self)
-        self.screen = screen
         self.map_left = map_left
         self.map_top = map_top
         self.map_width = map_width
@@ -96,7 +95,7 @@ class SpeedometerOverlay(QMainWindow):
             self.l_max_speed_v.setText(f'Max: {stats["vertical"]["Max"]*settings.units[0]:0.2f} {settings.units[1]}')
 
 
-    def paintEvent(self, event=None):
+    def paintEvent(self, event):
         painter = QPainter(self)
         painter.setOpacity(settings.overlay_opacity)
         painter.setBrush(QColor(*settings.overlay_color))
@@ -111,15 +110,7 @@ class SpeedometerOverlay(QMainWindow):
             self.reposition()
 
 
-    def center(self):
-        geo = self.frameGeometry()
-        geo.moveCenter(self.screen.geometry().center())
-        self.move(geo.topLeft())
-
-
     def reposition(self):
-        geo = self.frameGeometry()
-        geo.moveCenter(self.screen.geometry().center())
         height = self.frameGeometry().height()
         width = self.frameGeometry().width()
         offset =  QPoint(settings.horizontal_offset, - settings.vertical_offset)

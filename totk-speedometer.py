@@ -1,4 +1,5 @@
 
+import json
 import os
 import signal
 import sys
@@ -449,6 +450,11 @@ def detect_map(monitor_number):
                                         )
                                     print('Map center: [', map_circle[0], ',', map_circle[1], ']  Map radius:', map_circle[2])
                                     print()
+                                    map_position_cache = {'monitor_region': monitor_region,
+                                                            'monitor_scaling': monitor_scaling,
+                                                            'map_circle': map_circle.tolist()
+                                                        }
+                                    json.dump(map_position_cache, open(settings.map_position_cache_filename, 'w') )
                                     return map_circle, monitor_region, monitor_scaling
 
             sleep_time = (1/settings.refresh_rate)-(time.time()-t_start)
@@ -519,7 +525,7 @@ class SpeedometerRunnable(QRunnable):
                 if sleep_time > 0:
                     time.sleep(sleep_time)
 
-                # # Uncoment this line to print the overlay refresh rate
+                # # Uncomment this line to print the overlay refresh rate
                 # print('FPS:', 1/(time.time()-t_start))
 
         self.finished = True
@@ -533,11 +539,13 @@ def main():
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument('-f', dest='files', metavar='file', type=str, nargs='+', help='path to video file. Accepts multiple files')
     group.add_argument('-s', dest='screen_capture', action='store_true', help='use screen capture and overlay stats')
-    parser.add_argument('-m', dest='monitor', default=1, type=int, help='monitor number to capture and display the overlay.')
     group.add_argument('--test', dest='test', action='store_true', help='test image pre-processing')
-    args = parser.parse_args()
 
-    parser.add_argument('file', type=argparse.FileType('r'), nargs='+')
+    group_optional = parser.add_mutually_exclusive_group(required=False)
+    group_optional.add_argument('-m', '--monitor', dest='monitor', default=1, type=int, help='monitor number to capture and display the overlay')
+    group_optional.add_argument('-c', '--cached-map-position', dest='cache', action='store_true', help='use the cached map position instead of searching')
+
+    args = parser.parse_args()
 
     signal.signal(signal.SIGINT, signal.SIG_DFL)
 
@@ -555,10 +563,25 @@ def main():
                 export_video_with_overlay(f)
 
     elif args.screen_capture:
-        map_circle, monitor_region, monitor_scaling = detect_map(args.monitor)
+        if args.cache and os.path.isfile(settings.map_position_cache_filename):
+            map_position_cache = json.load(open(settings.map_position_cache_filename))
+            monitor_region = map_position_cache['monitor_region']
+            monitor_scaling = map_position_cache['monitor_scaling']
+            map_circle = map_position_cache['map_circle']
+            print('Using cached map position.')
+            print()
+            print('Map region',
+                    ' width:', monitor_region['width'],
+                    ' height:', monitor_region['height'],
+                    ' top:', monitor_region['top'],
+                    ' left:', monitor_region['left']
+                )
+            print('Map center: [', map_circle[0], ',', map_circle[1], ']  Map radius:', map_circle[2])
+            print()
+        else:
+            map_circle, monitor_region, monitor_scaling = detect_map(args.monitor)
         app = QtWidgets.QApplication(sys.argv)
-        screen = app.screens()[args.monitor-1]
-        mainwindow = SpeedometerOverlay(screen, monitor_region['left'], monitor_region['top'], monitor_region['width'])
+        mainwindow = SpeedometerOverlay(monitor_region['left'], monitor_region['top'], monitor_region['width'])
         mainwindow.show()
         runnable = SpeedometerRunnable(mainwindow, monitor_region, monitor_scaling, map_circle)
         mainwindow.set_runnable(runnable)

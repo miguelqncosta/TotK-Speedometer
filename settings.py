@@ -48,11 +48,14 @@ text_color_fail = (200, 200, 200)
 ## Reading every frame is very inaccurate. For better results is is best to read every 5 or 10 frames.
 calc_every_x_frames = 10
 
+
 ## Name of the directory where the videos will be saved.
 output_directory = 'totk-speedometer-videos'
 
+
 ## Show preview while creating the video
 show_preview = False
+
 
 ## Text size scale
 ## Default is 1.0 for m/s or u/s and 0.9 for km/h and mph
@@ -70,6 +73,7 @@ else:
 ## Maximum refresh rate (times per second)
 refresh_rate = 3
 
+
 ## Fixed offsets for overlay position
 ## The default overlay position is centered above the map.
 ## If you prefer to have the overlay in a different position change these offsets.
@@ -77,6 +81,11 @@ refresh_rate = 3
 horizontal_offset = 0
 ## Vertical Offset: a positive value moves the overlay up and a negative value moves the overlay down.
 vertical_offset = 0
+
+
+## Filename to store the map position cache.
+map_position_cache_filename = 'map_position_cache.txt'
+
 
 ## Stylesheets
 title_style = (

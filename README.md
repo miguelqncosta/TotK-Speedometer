@@ -105,39 +105,43 @@ python3 totk-speedometer.py -f '/Users/miguelcosta/Downloads/totk-videos/2023100
 
 Output files are saved to `<path-to-totk-video>/totk-speedometer-videos/`
 
-##### Accepts multiple video files as input:
+#### Accepts multiple video files as input:
 ```
 python3 totk-speedometer.py -f <path-to-totk-video-1>  <path-to-totk-video-2> ...
 ```
 
 ### Running from screen capture
-Running from screen capture will be more imprecise since it uses real time to calculate speed instead of the video FPS as a time base.
-
-The overlay will be automatically positioned above the map and can be dragged and repositioned. You can also find in the [settings.py](settings.py) file configurations to offset the overlay to a different position and configure the font size and colors.
-
-The map position is only detected when the speedometer starts. If the game window is moved or resized the speedometer must be closed and reopened.
-
-##### To quit use `Ctrl+C` on the terminal window.
-
 ```
 python3 totk-speedometer.py -s
 ```
+Running from screen capture will be more imprecise since it uses real time to calculate speed instead of the video FPS as a time base.
 
-To select a difference monitor to capture use the `-m` argument (1, 2, 3, etc. Default is 1):
+The overlay will be automatically positioned above the map and can be dragged and repositioned. You can also find in the [settings.py](settings.py) file configurations to offset the overlay to a different position and configure the overlay style.
+
+The map position is only detected when the speedometer starts. If the game window is moved or resized the speedometer must be closed and reopened.
+
+#### To select a difference monitor to capture use the `-m` argument (1, 2, 3, etc. Default is 1):
 ```
 python3 totk-speedometer.py -s -m <monitor-number>
 ```
+
+#### Use cached map position instead of searching
+```
+python3 totk-speedometer.py -s -c
+```
+The last detected map position is saved to a file and can be used to skip the detection step for a faster startup with the `-c` argument. The monitor that was used is also saved so when using this options the `-m` argument cannot be used.
+
 
 
 
 ## Updating
 Get notified of new releases by enabling watch for the repository releases. You need to be logged in with a GitHub account for the watch button to be visible.
 
-Click the `Watch` button -> select `Custom` -> check the `Releases` option and click `Apply`. 
+Click the `Watch` button -> select `Custom` -> check the `Releases` option and click `Apply`.
 <p align="center">
   <img src="images/readme/watch-button.png" height="400px"/>
   <img src="images/readme/arrow-right.png" height="400px"/>
-  <img src="images/readme/watch-custom-releases.png" height="400px" /> 
+  <img src="images/readme/watch-custom-releases.png" height="400px" />
 </p>
 
 
@@ -149,7 +153,7 @@ It's best to delete the older version folder instead of replacing the files on i
 
 ## Known issues:
 - The map underneath the coordinates can obfuscate them and make it very hard to read. This sometimes results in wrong coordinates or not being able to read the coordinates at all. Setting the mini-map to the sky (open map, switch to sky view and close it) usually leads to better results. Roads, shrines, map pins, etc under the map coordinates will make it much harder to read the coordinates and lead to incorrect results.
-- Running from screen capture can have a hard time detecting the map position. If it doesn't work you can use the `images/detected_circles.png` and `images/detected_map_circle.png` to try to understand whats happening. Using a maximized window or a solid color background usually helps. For the map detection to work the coordinates must be readable so changing the mini-map to the sky view can also make the map detection faster. 
+- Running from screen capture can have a hard time detecting the map position. If it doesn't work you can use the `images/detected_circles.png` and `images/detected_map_circle.png` to try to understand whats happening. Using a maximized window or a solid color background usually helps. For the map detection to work the coordinates must be readable so changing the mini-map to the sky view can also make the map detection faster.
 
 
 ## Roadmap
